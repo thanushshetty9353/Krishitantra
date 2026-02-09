@@ -11,7 +11,7 @@ from backend.app.database import (
 )
 
 app = FastAPI(
-    title="SE-SLM Phase 1",
+    title="Krishitantra",
     description="Base Transformer SLM with Runtime Telemetry Monitoring",
     version="1.0.0"
 )
