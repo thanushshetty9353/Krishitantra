@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-02-10T12:37:36.162833",
+  "candidates": [
+    {
+      "candidate": {
+        "prune_blocks": [
+          "encoder.block.0"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.05,
+      "score": 2.9
+    },
+    {
+      "candidate": {
+        "prune_blocks": [
+          "encoder.block.1"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.05,
+      "score": 2.9
+    },
+    {
+      "candidate": {
+        "prune_blocks": [
+          "encoder.block.2"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.05,
+      "score": 2.9
+    },
+    {
+      "candidate": {
+        "prune_blocks": [
+          "encoder.block.0",
+          "encoder.block.1"
+        ]
+      },
+      "latency_gain_ms": 10,
+      "memory_gain_mb": 6,
+      "risk": 0.05,
+      "score": 6.3
+    },
+    {
+      "candidate": {
+        "prune_blocks": [
+          "encoder.block.0",
+          "encoder.block.2"
+        ]
+      },
+      "latency_gain_ms": 10,
+      "memory_gain_mb": 6,
+      "risk": 0.05,
+      "score": 6.3
+    },
+    {
+      "candidate": {
+        "prune_blocks": [
+          "encoder.block.1",
+          "encoder.block.2"
+        ]
+      },
+      "latency_gain_ms": 10,
+      "memory_gain_mb": 6,
+      "risk": 0.05,
+      "score": 6.3
+    },
+    {
+      "candidate": {
+        "prune_blocks": [
+          "encoder.block.0",
+          "encoder.block.1",
+          "encoder.block.2"
+        ]
+      },
+      "latency_gain_ms": 15,
+      "memory_gain_mb": 9,
+      "risk": 0.05,
+      "score": 9.7
+    }
+  ],
+  "selected": {
+    "candidate": {
+      "prune_blocks": [
+        "encoder.block.0",
+        "encoder.block.1",
+        "encoder.block.2"
+      ]
+    },
+    "latency_gain_ms": 15,
+    "memory_gain_mb": 9,
+    "risk": 0.05,
+    "score": 9.7
+  }
+}
