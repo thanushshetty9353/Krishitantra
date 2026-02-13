@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Krishitantra SE-SLM – Self-Evolving Small Language Model Dashboard">
+    <title>Krishitantra – SE-SLM Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<!-- ========== Header ========== -->
+<header class="header">
+    <div class="header-inner">
+        <div class="logo">
+            <div class="logo-icon">🧠</div>
+            <span class="logo-text">Krishitantra</span>
+            <span class="logo-badge">SE-SLM v3.0</span>
+        </div>
+        <div class="header-status">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span id="header-model">Model: base</span>
+            </div>
+            <div class="status-indicator">
+                <span id="header-uptime">⏱ 0s</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ========== Nav Tabs ========== -->
+<main class="main-container">
+    <nav class="nav-tabs" role="tablist">
+        <button class="nav-tab active" data-tab="overview" role="tab">
+            <span class="tab-icon">📊</span> Overview
+        </button>
+        <button class="nav-tab" data-tab="inference" role="tab">
+            <span class="tab-icon">💬</span> Inference
+        </button>
+        <button class="nav-tab" data-tab="telemetry" role="tab">
+            <span class="tab-icon">📈</span> Telemetry
+        </button>
+        <button class="nav-tab" data-tab="analysis" role="tab">
+            <span class="tab-icon">🔬</span> Analysis
+        </button>
+        <button class="nav-tab" data-tab="evolution" role="tab">
+            <span class="tab-icon">🧬</span> Evolution
+        </button>
+        <button class="nav-tab" data-tab="registry" role="tab">
+            <span class="tab-icon">📋</span> Registry
+        </button>
+        <button class="nav-tab" data-tab="drift" role="tab">
+            <span class="tab-icon">🌊</span> Drift
+        </button>
+        <button class="nav-tab" data-tab="governance" role="tab">
+            <span class="tab-icon">🛡️</span> Governance
+        </button>
+    </nav>
+
+    <!-- ====================== -->
+    <!-- OVERVIEW TAB -->
+    <!-- ====================== -->
+    <section id="tab-overview" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value" id="ov-requests">0</div>
+                <div class="stat-sub">Inference calls processed</div>
+                <div class="stat-icon">📨</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Latency</div>
+                <div class="stat-value" id="ov-latency">0<span style="font-size:0.9rem">ms</span></div>
+                <div class="stat-sub">Mean response time</div>
+                <div class="stat-icon">⚡</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Model Version</div>
+                <div class="stat-value" id="ov-model" style="font-size:1.4rem">base</div>
+                <div class="stat-sub">Currently active</div>
+                <div class="stat-icon">🧠</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Drift Events</div>
+                <div class="stat-value" id="ov-drifts">0</div>
+                <div class="stat-sub">Domain shifts detected</div>
+                <div class="stat-icon">🌊</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Tokens Processed</div>
+                <div class="stat-value" id="ov-tokens">0</div>
+                <div class="stat-sub">Input + output tokens</div>
+                <div class="stat-icon">🔤</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Evolutions</div>
+                <div class="stat-value" id="ov-evolutions">0</div>
+                <div class="stat-sub">Model versions created</div>
+                <div class="stat-icon">🧬</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📈</span> Recent Activity</div>
+                </div>
+                <div id="ov-activity">
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>No activity yet. Send an inference request to begin.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🏥</span> System Health</div>
+                </div>
+                <div id="ov-health">
+                    <div class="progress-bar-container">
+                        <div class="progress-label"><span>System Status</span><span id="ov-status-text">Healthy</span></div>
+                        <div class="progress-bar"><div class="progress-fill success" style="width:100%"></div></div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-label"><span>Uptime</span><span id="ov-uptime-text">0s</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+                    </div>
+                    <div style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted)">
+                        <p>Latency range: <span id="ov-lat-range">N/A</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================== -->
+    <!-- INFERENCE TAB -->
+    <!-- ====================== -->
+    <section id="tab-inference" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">💬</span> Model Inference</div>
+            </div>
+            <div class="inference-box">
+                <input type="text" class="inference-input" id="infer-input"
+                       placeholder="Enter your prompt... e.g. 'Explain quantum computing'" />
+                <button class="btn-primary" id="infer-btn" onclick="runInference()">
+                    Generate
+                </button>
+            </div>
+            <div class="response-box" id="infer-response">
+                Response will appear here...
+            </div>
+            <div class="response-meta" id="infer-meta" style="display:none">
+                <span>⏱ <span id="infer-latency">-</span></span>
+                <span>🆔 <span id="infer-id">-</span></span>
+                <span>🌊 Drift: <span id="infer-drift">-</span></span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">📜</span> Recent Requests</div>
+                <button class="card-action" onclick="loadTelemetry()">Refresh</button>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="data-table" id="infer-history-table">
+                    <thead>
+                        <tr>
+                            <th>Request ID</th>
+                            <th>Input Tokens</th>
+                            <th>Output Tokens</th>
+                            <th>Latency (ms)</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="infer-history-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================== -->
+    <!-- TELEMETRY TAB -->
+    <!-- ====================== -->
+    <section id="tab-telemetry" class="tab-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Requests</div>
+                <div class="stat-value" id="tel-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Latency</div>
+                <div class="stat-value" id="tel-avg-lat">0<span style="font-size:0.9rem">ms</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Min Latency</div>
+                <div class="stat-value" id="tel-min-lat">0<span style="font-size:0.9rem">ms</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Max Latency</div>
+                <div class="stat-value" id="tel-max-lat">0<span style="font-size:0.9rem">ms</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">📊</span> Latency Distribution</div>
+                <button class="card-action" onclick="loadTelemetry()">Refresh</button>
+            </div>
+            <div id="tel-latency-chart" style="display:flex;align-items:flex-end;gap:3px;height:150px;padding:1rem 0"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">🔧</span> Structural Telemetry</div>
+            </div>
+            <div id="tel-structural" class="json-view">Loading structural telemetry...</div>
+        </div>
+    </section>
+
+    <!-- ====================== -->
+    <!-- ANALYSIS TAB -->
+    <!-- ====================== -->
+    <section id="tab-analysis" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">🔬</span> Structural Analysis</div>
+                <button class="card-action" id="analysis-btn" onclick="runAnalysis()">Run Analysis</button>
+            </div>
+            <div id="analysis-result">
+                <div class="empty-state">
+                    <div class="icon">🔬</div>
+                    <p>Click "Run Analysis" to analyze model structure based on telemetry data.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">✂️</span> Prunable Blocks</div>
+                </div>
+                <div id="analysis-prunable">
+                    <div class="empty-state"><p>Run analysis first</p></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">💡</span> Recommendations</div>
+                </div>
+                <div id="analysis-recs">
+                    <div class="empty-state"><p>Run analysis first</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================== -->
+    <!-- EVOLUTION TAB -->
+    <!-- ====================== -->
+    <section id="tab-evolution" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">🧬</span> Evolution Engine</div>
+                <button class="btn-primary" id="evolve-btn" onclick="triggerEvolution()">
+                    🚀 Trigger Evolution
+                </button>
+            </div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem">
+                Manually trigger an evolution cycle: collect telemetry → generate candidates → recompile → validate → deploy.
+            </p>
+            <div id="evolution-status"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">📜</span> Evolution History</div>
+            </div>
+            <div id="evolution-history">
+                <div class="empty-state">
+                    <div class="icon">🧬</div>
+                    <p>No evolution cycles recorded yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">📊</span> Profiling Report</div>
+                <button class="card-action" onclick="runProfiler()">Generate Report</button>
+            </div>
+            <div id="profiler-result" class="json-view">Click "Generate Report" to create usage profiling report.</div>
+        </div>
+    </section>
+
+    <!-- ====================== -->
+    <!-- REGISTRY TAB -->
+    <!-- ====================== -->
+    <section id="tab-registry" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">📋</span> Model Registry</div>
+                <button class="card-action" onclick="loadRegistry()">Refresh</button>
+            </div>
+            <div id="registry-summary" style="margin-bottom:1rem"></div>
+            <div style="overflow-x:auto">
+                <table class="data-table" id="registry-table">
+                    <thead>
+                        <tr>
+                            <th>Version</th>
+                            <th>Parent</th>
+                            <th>Optimization</th>
+                            <th>Compression</th>
+                            <th>Accuracy Drop</th>
+                            <th>Validation</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registry-body"></tbody>
+                </table>
+            </div>
+            <div id="registry-empty" class="empty-state">
+                <div class="icon">📋</div>
+                <p>No models registered yet. Trigger an evolution to create optimized versions.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================== -->
+    <!-- DRIFT TAB -->
+    <!-- ====================== -->
+    <section id="tab-drift" class="tab-content">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🌊</span> Drift Detection</div>
+                    <button class="card-action" onclick="loadDrift()">Refresh</button>
+                </div>
+                <div class="drift-score-display">
+                    <div class="drift-circle low" id="drift-circle">
+                        <div class="drift-value" id="drift-current-score">0.00</div>
+                        <div class="drift-label">Drift Score</div>
+                    </div>
+                    <div style="display:flex;justify-content:center;gap:2rem;margin-top:1rem">
+                        <div>
+                            <div style="font-size:0.7rem;color:var(--text-muted)">MEMORY SIZE</div>
+                            <div style="font-size:1.1rem;font-weight:600" id="drift-mem-size">0</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.7rem;color:var(--text-muted)">DRIFT EVENTS</div>
+                            <div style="font-size:1.1rem;font-weight:600" id="drift-events-count">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📉</span> Drift History</div>
+                </div>
+                <div id="drift-chart" style="display:flex;align-items:flex-end;gap:3px;height:120px;padding:0.5rem 0"></div>
+                <div style="overflow-x:auto;margin-top:1rem">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Score</th>
+                                <th>Flag</th>
+                                <th>Embedding</th>
+                                <th>Vocab</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drift-history-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================== -->
+    <!-- GOVERNANCE TAB -->
+    <!-- ====================== -->
+    <section id="tab-governance" class="tab-content">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🛡️</span> Governance Controls</div>
+                </div>
+                <div id="gov-summary" style="margin-bottom:1.25rem"></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button class="btn-danger" onclick="performRollback()">
+                        ⏪ Rollback to Backup
+                    </button>
+                    <button class="card-action" onclick="loadGovernance()">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📜</span> Audit Trail</div>
+                </div>
+                <div id="gov-audit">
+                    <div class="empty-state">
+                        <div class="icon">📜</div>
+                        <p>No audit events recorded yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -3,3 +3,10 @@ uvicorn
 transformers
 torch
 pydantic
+scikit-learn
+numpy
+prometheus_client
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-instrumentation-fastapi
+PyPDF2

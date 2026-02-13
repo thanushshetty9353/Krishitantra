@@ -1,34 +1,77 @@
-# SE-SLM – Phase 0
+# Krishitantra – Self-Evolving Small Language Model (SE-SLM)
 
-This project implements Phase 0 of a Self-Evolving Small Language Model (SE-SLM) system.
+A full-featured Self-Evolving Small Language Model system that monitors, profiles, analyzes, evolves, and governs a transformer-based language model in real-time.
 
-## Phase 0 Objective
-Establish a baseline transformer-based inference system that:
-- Loads a pretrained Small Language Model (SLM)
-- Exposes inference via FastAPI
-- Persists request metadata for future telemetry
+## Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│             Frontend Dashboard              │
+│   (Overview, Telemetry, Drift, Governance)  │
+├─────────────────────────────────────────────┤
+│              FastAPI Backend                │
+│  /infer  /telemetry  /evolve  /governance   │
+├─────────────┬───────────┬───────────────────┤
+│  Telemetry  │   Usage   │    Structural     │
+│  Monitor    │  Profiler │    Analyzer       │
+├─────────────┼───────────┼───────────────────┤
+│  Evolution  │   Drift   │   Governance      │
+│  Engine     │ Detector  │   Manager         │
+├─────────────┴───────────┴───────────────────┤
+│        Model (google/flan-t5-small)         │
+└─────────────────────────────────────────────┘
+```
 
 ## Tech Stack
-- Python
-- FastAPI
-- Hugging Face Transformers
-- PyTorch
-- SQLite
 
-## Model
-- distilgpt2 (Hugging Face)
+- **Language**: Python 3.10+
+- **Framework**: FastAPI + Uvicorn
+- **AI/ML**: PyTorch, Hugging Face Transformers
+- **Model**: google/flan-t5-small (Seq2Seq)
+- **Telemetry**: OpenTelemetry, Prometheus
+- **Database**: SQLite
+- **Frontend**: HTML/CSS/JavaScript (Dark-themed dashboard)
 
-## API Endpoint
-POST /infer
+## Setup
 
-### Input
-{
-  "text": "Explain transformers"
-}
+```bash
+# Install dependencies
+pip install -r requirements.txt
 
-### Output
-{
-  "response": "Transformers are neural network models..."
-}
+# Run the server
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-This phase serves as the baseline system for future optimization and self-evolution phases.
+Open **http://localhost:8000** to access the dashboard.
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | Dashboard UI |
+| `/health` | GET | System health check |
+| `/infer` | POST | Run model inference |
+| `/telemetry` | GET | View telemetry data |
+| `/telemetry/structural` | GET | Structural telemetry |
+| `/profiler/run` | POST | Run usage profiler |
+| `/profiler/report` | GET | View profiling report |
+| `/analysis` | GET | Structural analysis |
+| `/evolve` | POST | Trigger evolution cycle |
+| `/registry` | GET | Model registry |
+| `/registry/{version}` | GET | Specific model version |
+| `/drift` | GET | Drift detection status |
+| `/governance/audit` | GET | Audit trail |
+| `/governance/rollback` | POST | Rollback model |
+| `/metrics` | GET | Prometheus metrics |
+
+## System Components
+
+1. **Runtime Telemetry Monitor** – Logs token activations, attention head utilization, layer execution frequency, latency and memory metrics
+2. **Usage Profiler** – Aggregates telemetry into frequent token paths, dormant neurons, redundant heads
+3. **Structural Analyzer** – Identifies prunable heads, detects redundant FFN layers, scores neuron importance, recommends rewiring
+4. **Evolution Engine** – Executes scheduled evolution cycles with head/layer pruning, quantization, and embedding compression
+5. **Self-Recompilation** – Recompiles models with weight inheritance, graph rewriting, and lightweight distillation
+6. **Validation Sandbox** – Runs accuracy regression tests, hallucination checks, and latency measurement
+7. **Drift Detector** – Detects embedding distribution shifts, vocabulary change rate, and intent variance
+8. **Model Registry** – Maintains model lineage, compression ratios, accuracy deltas, and evolution metadata
+9. **Governance Manager** – Supports instant rollback, evolution audit logs, and change approvals
