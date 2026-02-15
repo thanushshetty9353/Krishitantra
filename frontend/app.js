@@ -20,10 +20,10 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
 
         // Load data for the tab
         switch (target) {
-            case 'overview':   loadOverview(); break;
-            case 'telemetry':  loadTelemetry(); break;
-            case 'registry':   loadRegistry(); break;
-            case 'drift':      loadDrift(); break;
+            case 'overview': loadOverview(); break;
+            case 'telemetry': loadTelemetry(); break;
+            case 'registry': loadRegistry(); break;
+            case 'drift': loadDrift(); break;
             case 'governance': loadGovernance(); break;
         }
     });
@@ -232,7 +232,7 @@ async function loadTelemetry() {
         requests.forEach(req => {
             const height = Math.max(4, (req.latency_ms / maxLat) * 130);
             const color = req.latency_ms > 2000 ? 'var(--danger)' :
-                          req.latency_ms > 1000 ? 'var(--warning)' : 'var(--accent-primary)';
+                req.latency_ms > 1000 ? 'var(--warning)' : 'var(--accent-primary)';
             const bar = document.createElement('div');
             bar.style.cssText = `
                 flex: 1; max-width: 30px; height: ${height}px;
@@ -370,22 +370,71 @@ async function triggerEvolution() {
         const r = data.result;
         const status = r.evolution_status || r.status || 'UNKNOWN';
         const badge = status === 'APPROVED' ? 'badge-success' :
-                      status === 'REJECTED' ? 'badge-danger' : 'badge-warning';
+            status === 'REJECTED' ? 'badge-danger' :
+                status === 'ERROR' ? 'badge-danger' : 'badge-warning';
+
+        // Build detail sections
+        let details = '';
+        if (r.architecture_diff) {
+            const diff = r.architecture_diff;
+            details += `
+                <div style="margin-top:0.75rem;padding:0.5rem;background:var(--bg-secondary);border-radius:6px">
+                    <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.25rem">Architecture Changes</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">
+                        Version: <strong>${diff.version || '-'}</strong> |
+                        Params: ${(diff.base_parameters || 0).toLocaleString()} → ${(diff.optimized_parameters || 0).toLocaleString()} |
+                        Reduction: ${diff.reduction_percent || 0}%
+                    </div>
+                </div>`;
+        }
+        if (r.validation) {
+            const v = r.validation;
+            details += `
+                <div style="margin-top:0.5rem;padding:0.5rem;background:var(--bg-secondary);border-radius:6px">
+                    <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.25rem">Validation</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">
+                        Similarity: ${v.similarity_score || '-'} |
+                        Accuracy Drop: ${v.accuracy_drop_percent || 0}% |
+                        Hallucination: ${v.hallucination_rate || 0} |
+                        Status: <strong>${v.status || '-'}</strong>
+                    </div>
+                </div>`;
+        }
+        if (r.error) {
+            details += `
+                <div style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,80,80,0.1);border-radius:6px">
+                    <div style="font-size:0.8rem;font-weight:600;color:var(--danger);margin-bottom:0.25rem">Error</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted)">${r.error}</div>
+                </div>`;
+        }
 
         statusEl.innerHTML = `
             <div style="padding:1rem;border:1px solid var(--border-subtle);border-radius:var(--radius-md)">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
                     <strong>Evolution Result</strong>
                     <span class="badge ${badge}">${status}</span>
                 </div>
-                <div class="json-view">${JSON.stringify(r, null, 2)}</div>
+                ${details}
+                <details style="margin-top:0.75rem">
+                    <summary style="font-size:0.75rem;color:var(--text-muted);cursor:pointer">Raw JSON</summary>
+                    <div class="json-view" style="margin-top:0.5rem">${JSON.stringify(r, null, 2)}</div>
+                </details>
             </div>`;
 
-        showToast(`Evolution: ${status}`, status === 'APPROVED' ? 'success' : 'info');
+        const toastType = status === 'APPROVED' ? 'success' :
+            status === 'ERROR' ? 'error' : 'info';
+        showToast(`Evolution: ${status}`, toastType);
+
+        // Refresh dashboard data
         loadOverview();
+        loadRegistry();
     } else {
-        statusEl.innerHTML = '<div style="padding:1rem;color:var(--danger)">Evolution failed. Check server logs.</div>';
-        showToast('Evolution failed', 'error');
+        statusEl.innerHTML = `
+            <div style="padding:1rem;color:var(--danger)">
+                <strong>Evolution failed</strong><br>
+                <span style="font-size:0.85rem">Could not reach the server. Check that the backend is running.</span>
+            </div>`;
+        showToast('Evolution failed — server unreachable', 'error');
     }
 }
 
@@ -437,7 +486,7 @@ async function loadRegistry() {
         data.models.forEach(m => {
             const validBadge = m.validation_status === 'PASS' ? 'badge-success' : 'badge-danger';
             const optText = Array.isArray(m.optimization) ? m.optimization.join(', ') :
-                           (m.optimization || 'unknown');
+                (m.optimization || 'unknown');
 
             tbody.innerHTML += `<tr>
                 <td><strong>${m.version}</strong></td>
@@ -555,8 +604,8 @@ async function loadGovernance() {
 
         data.audit_log.forEach(evt => {
             const badge = evt.status === 'APPROVED' ? 'badge-success' :
-                          evt.status === 'REJECTED' ? 'badge-danger' :
-                          evt.status === 'OK' ? 'badge-success' : 'badge-neutral';
+                evt.status === 'REJECTED' ? 'badge-danger' :
+                    evt.status === 'OK' ? 'badge-success' : 'badge-neutral';
 
             timeline.innerHTML += `
                 <div class="timeline-item">

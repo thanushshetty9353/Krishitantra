@@ -1,5 +1,13 @@
 # backend/app/model.py
 
+"""
+Model Manager (SE-SLM)
+
+Manages the base transformer SLM and optimized versions.
+Handles model loading, inference, and structural telemetry hooks.
+Applies dynamic quantization at load-time for optimized models.
+"""
+
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 from pathlib import Path
@@ -44,25 +52,52 @@ class ModelManager:
         self._register_hooks()
 
     def load_latest_optimized(self):
+        """
+        Load the latest optimized model version.
+        Applies dynamic INT8 quantization at load-time for performance.
+        Falls back to base model on any failure.
+        """
         if not OPTIMIZED_DIR.exists():
+            print("⚠️  No optimized model directory found")
             return
 
         versions = sorted(
-            OPTIMIZED_DIR.glob("v*"),
-            key=lambda x: int(x.name.replace("v", ""))
+            [v for v in OPTIMIZED_DIR.glob("v*") if v.is_dir() and v.name != "backup"],
+            key=lambda x: int(x.name.replace("v", "").split(".")[0])
         )
 
         if not versions:
+            print("⚠️  No optimized model versions found")
             return
 
         latest = versions[-1]
         print(f"🔥 Loading optimized model: {latest.name}")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(latest)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(latest)
-        self.model.eval()
-        self.current_version = latest.name
-        self._register_hooks()
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(latest)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(latest)
+
+            # Apply dynamic INT8 quantization at load-time
+            # This gives memory/latency benefits without needing to save quantized weights
+            try:
+                self.model = torch.quantization.quantize_dynamic(
+                    self.model,
+                    {torch.nn.Linear},
+                    dtype=torch.qint8
+                )
+                print(f"⚡ Applied INT8 quantization to {latest.name}")
+            except Exception as qe:
+                print(f"⚠️  Quantization skipped: {qe}")
+
+            self.model.eval()
+            self.current_version = latest.name
+            self._register_hooks()
+            print(f"✅ Model loaded: {self.current_version}")
+
+        except Exception as e:
+            print(f"❌ Failed to load optimized model {latest.name}: {e}")
+            print("↩️  Falling back to base model...")
+            self.load_base_model()
 
     # ============================================================
     # Hook Registration
@@ -71,6 +106,10 @@ class ModelManager:
     def _register_hooks(self):
         head_activation_stats.clear()
         ffn_sparsity_stats.clear()
+
+        # Check if model has encoder attribute (non-quantized path)
+        if not hasattr(self.model, 'named_modules'):
+            return
 
         for name, module in self.model.named_modules():
 

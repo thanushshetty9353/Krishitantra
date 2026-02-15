@@ -361,18 +361,23 @@ def trigger_evolution_manual(request: EvolutionRequest = None):
     try:
         result = run_evolution_cycle()
 
+        # Ensure result is a dict
+        if not isinstance(result, dict):
+            result = {"evolution_status": "UNKNOWN", "raw": str(result)}
+
+        # Log to audit
         log_evolution_audit(
             action="manual_evolution",
             version=result.get("architecture_diff", {}).get("version", "unknown")
-                if isinstance(result, dict) else "unknown",
-            details=result if isinstance(result, dict) else {"result": str(result)},
-            status=result.get("evolution_status", "UNKNOWN")
-                if isinstance(result, dict) else "UNKNOWN",
+                if isinstance(result.get("architecture_diff"), dict) else
+                result.get("new_version", "unknown"),
+            details=result,
+            status=result.get("evolution_status", "UNKNOWN"),
             triggered_by=triggered_by
         )
 
         # Reload model if evolution was approved
-        if isinstance(result, dict) and result.get("evolution_status") == "APPROVED":
+        if result.get("evolution_status") == "APPROVED":
             model_manager.load_latest_optimized()
             ACTIVE_MODEL_VERSION.labels(
                 version=model_manager.current_version
@@ -381,7 +386,21 @@ def trigger_evolution_manual(request: EvolutionRequest = None):
         return {"status": "OK", "result": result}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_detail = {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+        print(f"❌ Evolution endpoint error: {e}")
+        traceback.print_exc()
+        # Return error as JSON instead of HTTPException so frontend gets structured data
+        return {
+            "status": "ERROR",
+            "result": {
+                "evolution_status": "ERROR",
+                "error": str(e)
+            }
+        }
 
 
 # ======================================================
