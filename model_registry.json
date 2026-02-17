@@ -148,5 +148,45 @@
     "hallucination_rate": 0.0,
     "validation_status": "PASS",
     "trigger": "domain_drift"
+  },
+  {
+    "version": "v18",
+    "parent_version": "v17",
+    "timestamp": "2026-02-17T05:29:59.612109",
+    "lineage": [
+      "base",
+      "v1",
+      "v2",
+      "v3",
+      "v4",
+      "v5",
+      "v6",
+      "v7",
+      "v8",
+      "v9",
+      "v10",
+      "v11",
+      "v12",
+      "v13",
+      "v14",
+      "v15",
+      "v16",
+      "v17",
+      "v18"
+    ],
+    "compression_percent": 0.9,
+    "optimization": [
+      "head_pruning_tracked",
+      "Q4_K_M_quantization"
+    ],
+    "base_parameters": 1100000000,
+    "optimized_parameters": 1090100000,
+    "base_size_mb": 669,
+    "optimized_size_mb": 662.98,
+    "accuracy_drop_percent": 0.0,
+    "similarity_score": 1.0,
+    "hallucination_rate": 0.0,
+    "validation_status": "PASS",
+    "trigger": "domain_drift"
   }
 ]

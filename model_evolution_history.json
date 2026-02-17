@@ -591,5 +591,63 @@
       "risk": 0.0,
       "score": 3.4
     }
+  },
+  {
+    "timestamp": "2026-02-17T05:29:36.125779",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "ffn_sparsity"
+          ]
+        },
+        "latency_gain_ms": 5,
+        "memory_gain_mb": 3,
+        "risk": 0.0,
+        "score": 3.4
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "ffn_sparsity"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.0,
+      "score": 3.4
+    }
+  },
+  {
+    "timestamp": "2026-02-17T05:58:28.016025",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "ffn_sparsity"
+          ]
+        },
+        "latency_gain_ms": 15,
+        "memory_gain_mb": 5,
+        "projected_latency_improvement": "2.5%",
+        "risk": 0.0,
+        "score": 14.5
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "ffn_sparsity"
+        ]
+      },
+      "latency_gain_ms": 15,
+      "memory_gain_mb": 5,
+      "projected_latency_improvement": "2.5%",
+      "risk": 0.0,
+      "score": 14.5
+    }
   }
 ]

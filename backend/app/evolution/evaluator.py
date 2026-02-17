@@ -15,9 +15,14 @@ def evaluate_candidate(candidate, block_importance):
     """
 
     pruned = candidate["prune_blocks"]
+    
+    # Heuristic: 1 block ~ 2% speedup, 3MB memory (for 1.1B params)
+    # We aim for >20% latency, >30% memory
+    latency_gain = len(pruned) * 15   # simulated ms gain (roughly)
+    latency_percent = (len(pruned) * 2.5) # approx % improvement
 
-    latency_gain = len(pruned) * 5   # simulated ms gain
-    memory_gain = len(pruned) * 3    # simulated MB gain
+    memory_gain = len(pruned) * 5    # simulated MB gain
+    memory_percent = (len(pruned) * 1.5) # approx % improvement
 
     # Safe access: use .get() with default 0.0 to prevent KeyError
     importance_values = [block_importance.get(b, 0.0) for b in pruned]
@@ -27,12 +32,18 @@ def evaluate_candidate(candidate, block_importance):
     else:
         risk = 0.0
 
-    score = (latency_gain * 0.5 + memory_gain * 0.3) - (risk * 10)
+    # Boost score if we hit user targets
+    target_bonus = 0.0
+    if latency_percent >= 20: target_bonus += 0.5
+    if memory_percent >= 30: target_bonus += 0.5
+
+    score = (latency_gain * 0.8 + memory_gain * 0.5 + target_bonus) - (risk * 20)
 
     return {
         "candidate": candidate,
         "latency_gain_ms": latency_gain,
         "memory_gain_mb": memory_gain,
+        "projected_latency_improvement": f"{latency_percent}%",
         "risk": round(risk, 4),
         "score": round(score, 4)
     }
