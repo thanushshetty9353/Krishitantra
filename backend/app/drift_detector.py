@@ -4,52 +4,80 @@
 Domain Drift Detection Module (SE-SLM Requirement 3.7)
 
 Drift shall be detected using:
-- Embedding distribution shifts
+- Embedding distribution shifts (via TF-IDF vectors)
 - Vocabulary change rate
 - Intent variance
+
+Uses lightweight sklearn TF-IDF instead of transformer embeddings
+for GGUF model compatibility.
 """
 
-import torch
 import numpy as np
 from collections import Counter
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-MODEL_NAME = "google/flan-t5-small"
+# ============================================================
+# In-memory drift state
+# ============================================================
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
-model.eval()
-
-encoder = model.get_encoder()
-
-embedding_memory = []
+text_memory = []
 vocab_memory = []
 MAX_MEMORY = 20
 
+# Lightweight TF-IDF vectorizer for semantic comparison
+_vectorizer = TfidfVectorizer(max_features=500, stop_words="english")
+_fitted = False
+
+
+def initialize_memory(texts: list):
+    """Load historical texts into memory to warm-start drift detection."""
+    global text_memory, _fitted
+    
+    # Reset
+    text_memory.clear()
+    valid_texts = [t for t in texts if t and isinstance(t, str) and len(t.split()) > 2]
+    
+    # Keep only up to MAX_MEMORY
+    text_memory.extend(valid_texts[-MAX_MEMORY:])
+    
+    # Pre-fit if we have enough data
+    if len(text_memory) >= 2:
+        try:
+            _vectorizer.fit(text_memory)
+            _fitted = True
+            print(f"✅ Drift detector warmed up with {len(text_memory)} recent requests")
+        except Exception as e:
+            print(f"⚠️ Failed to warm-up drift detector: {e}")
+
 
 # --------------------------------------------------
-# Embedding Extraction
+# TF-IDF Embedding Extraction
 # --------------------------------------------------
 
-def get_embedding(text: str):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True)
+def get_embedding(text):
+    """Get TF-IDF vector for a text input."""
+    global _fitted
 
-    with torch.no_grad():
-        outputs = encoder(**inputs)
+    text_memory_snapshot = list(text_memory) + [text]
 
-    hidden = outputs.last_hidden_state
-    embedding = hidden.mean(dim=1).squeeze().numpy()
+    if len(text_memory_snapshot) < 2:
+        return np.zeros(500)
 
-    return embedding
+    try:
+        vectors = _vectorizer.fit_transform(text_memory_snapshot)
+        _fitted = True
+        return vectors[-1].toarray().flatten()
+    except Exception:
+        return np.zeros(500)
 
 
 # --------------------------------------------------
 # Vocabulary Shift
 # --------------------------------------------------
 
-def compute_vocab_shift(text: str):
-    tokens = tokenizer.tokenize(text)
+def compute_vocab_shift(text):
+    tokens = text.lower().split()
     current = Counter(tokens)
 
     if len(vocab_memory) == 0:
@@ -57,10 +85,8 @@ def compute_vocab_shift(text: str):
         return 0.0
 
     previous = vocab_memory[-1]
-
     diff = sum(abs(current[t] - previous.get(t, 0)) for t in current)
     total = sum(current.values()) + 1
-
     shift = diff / total
 
     vocab_memory.append(current)
@@ -71,57 +97,60 @@ def compute_vocab_shift(text: str):
 
 
 # --------------------------------------------------
-# Intent Variance (embedding distribution variance)
+# Intent Variance
 # --------------------------------------------------
 
-def compute_intent_variance(new_embedding):
-
-    if len(embedding_memory) < 5:
+def compute_intent_variance():
+    if len(text_memory) < 5:
         return 0.0
 
-    recent = np.array(embedding_memory[-5:])
-    return float(np.var(recent))
+    recent_texts = text_memory[-5:]
+    try:
+        vectors = _vectorizer.fit_transform(recent_texts)
+        return float(np.var(vectors.toarray()))
+    except Exception:
+        return 0.0
 
 
 # --------------------------------------------------
 # Main Drift Detection
 # --------------------------------------------------
 
-def detect_drift(text: str, threshold: float = 0.35):
+def detect_drift(text, threshold=0.35):
     """
     Drift score combines:
-    - embedding semantic shift
+    - embedding semantic shift (TF-IDF cosine distance)
     - vocabulary shift
-    - embedding variance trend
+    - intent variance
 
     Returns: (drift_flag, drift_score, components)
     """
 
-    new_embedding = get_embedding(text)
-
     # First request
-    if len(embedding_memory) == 0:
-        embedding_memory.append(new_embedding)
+    if len(text_memory) == 0:
+        text_memory.append(text)
         return False, 0.0, {
             "embedding_shift": 0.0,
             "vocab_shift": 0.0,
             "intent_variance": 0.0
         }
 
-    # --- Semantic shift ---
-    centroid = np.mean(embedding_memory, axis=0).reshape(1, -1)
-    similarity = cosine_similarity(
-        centroid,
-        new_embedding.reshape(1, -1)
-    )[0][0]
-
-    embedding_shift = 1 - similarity
+    # --- Semantic shift via TF-IDF ---
+    try:
+        all_texts = list(text_memory) + [text]
+        vectors = _vectorizer.fit_transform(all_texts)
+        centroid = vectors[:-1].mean(axis=0)
+        new_vec = vectors[-1]
+        similarity = cosine_similarity(centroid, new_vec)[0][0]
+        embedding_shift = max(0.0, 1.0 - similarity)
+    except Exception:
+        embedding_shift = 0.0
 
     # --- Vocab shift ---
     vocab_shift = compute_vocab_shift(text)
 
     # --- Intent variance ---
-    intent_variance = compute_intent_variance(new_embedding)
+    intent_variance = compute_intent_variance()
 
     # Weighted drift score
     drift_score = (
@@ -131,9 +160,9 @@ def detect_drift(text: str, threshold: float = 0.35):
     )
 
     # Update memory AFTER scoring
-    embedding_memory.append(new_embedding)
-    if len(embedding_memory) > MAX_MEMORY:
-        embedding_memory.pop(0)
+    text_memory.append(text)
+    if len(text_memory) > MAX_MEMORY:
+        text_memory.pop(0)
 
     drift_flag = drift_score > threshold
 
@@ -149,7 +178,7 @@ def detect_drift(text: str, threshold: float = 0.35):
 def get_drift_status():
     """Get current drift detection state."""
     return {
-        "memory_size": len(embedding_memory),
+        "memory_size": len(text_memory),
         "max_memory": MAX_MEMORY,
         "vocab_memory_size": len(vocab_memory)
     }

@@ -479,5 +479,117 @@
       "risk": 0.0,
       "score": 3.4
     }
+  },
+  {
+    "timestamp": "2026-02-17T04:36:38.513495",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "ffn_sparsity"
+          ]
+        },
+        "latency_gain_ms": 5,
+        "memory_gain_mb": 3,
+        "risk": 0.0,
+        "score": 3.4
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "ffn_sparsity"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.0,
+      "score": 3.4
+    }
+  },
+  {
+    "timestamp": "2026-02-17T04:49:01.143110",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "ffn_sparsity"
+          ]
+        },
+        "latency_gain_ms": 5,
+        "memory_gain_mb": 3,
+        "risk": 0.0,
+        "score": 3.4
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "ffn_sparsity"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.0,
+      "score": 3.4
+    }
+  },
+  {
+    "timestamp": "2026-02-17T05:00:24.468885",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "ffn_sparsity"
+          ]
+        },
+        "latency_gain_ms": 5,
+        "memory_gain_mb": 3,
+        "risk": 0.0,
+        "score": 3.4
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "ffn_sparsity"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.0,
+      "score": 3.4
+    }
+  },
+  {
+    "timestamp": "2026-02-17T05:09:50.731740",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "ffn_sparsity"
+          ]
+        },
+        "latency_gain_ms": 5,
+        "memory_gain_mb": 3,
+        "risk": 0.0,
+        "score": 3.4
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "ffn_sparsity"
+        ]
+      },
+      "latency_gain_ms": 5,
+      "memory_gain_mb": 3,
+      "risk": 0.0,
+      "score": 3.4
+    }
   }
 ]

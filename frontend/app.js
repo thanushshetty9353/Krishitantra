@@ -1,9 +1,10 @@
 // ============================================================
-// Krishitantra SE-SLM Dashboard – app.js
+// Krishitantra SE-SLM Dashboard – app.js (v3.0)
+// WhatsApp Chat UI + Full Dashboard Logic
 // ============================================================
 
 const API_BASE = window.location.origin;
-const POLL_INTERVAL = 10000; // 10 seconds
+const POLL_INTERVAL = 10000;
 
 // ============================================================
 // Tab Navigation
@@ -13,647 +14,631 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
         tab.classList.add('active');
-        const target = tab.dataset.tab;
-        document.getElementById(`tab-${target}`).classList.add('active');
-
-        // Load data for the tab
-        switch (target) {
-            case 'overview': loadOverview(); break;
-            case 'telemetry': loadTelemetry(); break;
-            case 'registry': loadRegistry(); break;
-            case 'drift': loadDrift(); break;
-            case 'governance': loadGovernance(); break;
-        }
+        const target = document.getElementById('tab-' + tab.dataset.tab);
+        if (target) target.classList.add('active');
     });
-});
-
-// Enter key triggers inference
-document.getElementById('infer-input')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') runInference();
 });
 
 // ============================================================
 // Toast Notifications
 // ============================================================
 
-function showToast(message, type = 'info') {
+function showToast(msg, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
+    toast.className = 'toast ' + type;
+    toast.textContent = msg;
     container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
 }
 
 // ============================================================
-// API Helpers
+// Time Formatting Helpers
 // ============================================================
 
-async function apiGet(path) {
-    try {
-        const res = await fetch(`${API_BASE}${path}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-    } catch (e) {
-        console.error(`API GET ${path} failed:`, e);
-        return null;
+function formatTime(date) {
+    if (!date) date = new Date();
+    const h = date.getHours();
+    const m = date.getMinutes().toString().padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return h12 + ':' + m + ' ' + ampm;
+}
+
+function setWelcomeTime() {
+    const el = document.getElementById('wa-welcome-time');
+    if (el) el.textContent = formatTime(new Date());
+}
+
+// ============================================================
+// WhatsApp Chat – Message Handling
+// ============================================================
+
+// ============================================================
+// WhatsApp Chat – Message Handling
+// ============================================================
+
+function addMessage(text, type, extra) {
+    const body = document.getElementById('wa-chat-body');
+    const msg = document.createElement('div');
+    msg.className = 'wa-message ' + (type === 'user' ? 'wa-outgoing' : 'wa-incoming');
+
+    let metaHTML = '<span class="wa-time">' + formatTime(new Date()) + '</span>';
+    if (type === 'user') {
+        // Double check simulation (gray initially, blue later if we wanted)
+        metaHTML += ' <span class="wa-check">\u2713\u2713</span>';
+    }
+
+    let extraInfo = '';
+    if (extra && extra.latency_ms) {
+        // Optional: show latency in a subtle way or just in telemetry panel
+        // For "same to same" look, we might hide this from the bubble or make it very subtle
+        // console.log('Latency:', extra.latency_ms);
+    }
+
+    msg.innerHTML = '<div class="wa-bubble">' +
+        '<div class="wa-text">' + escapeHtml(text) + '</div>' +
+        '<div class="wa-meta">' + metaHTML + '</div>' +
+        '</div>';
+
+    // Insert before the footer? No, append to body.
+    body.appendChild(msg);
+    scrollToBottom();
+
+    // Update sidebar preview if it exists
+    if (type === 'user') {
+        updateSidebarPreview('You: ' + text);
+    } else {
+        updateSidebarPreview(text);
     }
 }
 
-async function apiPost(path, data = {}) {
+function updateSidebarPreview(text) {
+    const lastMsg = document.getElementById('wa-last-msg');
+    const lastTime = document.getElementById('wa-last-time');
+    if (lastMsg) lastMsg.textContent = text;
+    if (lastTime) lastTime.textContent = formatTime(new Date());
+}
+
+function scrollToBottom() {
+    const body = document.getElementById('wa-chat-body');
+    body.scrollTop = body.scrollHeight;
+}
+
+function addTypingIndicator() {
+    const body = document.getElementById('wa-chat-body');
+    const msg = document.createElement('div');
+    msg.className = 'wa-message wa-incoming wa-typing';
+    msg.id = 'wa-typing';
+    msg.innerHTML = '<div class="wa-bubble">' +
+        '<div class="wa-typing-dot"></div>' +
+        '<div class="wa-typing-dot"></div>' +
+        '<div class="wa-typing-dot"></div>' +
+        '</div>';
+    body.appendChild(msg);
+    scrollToBottom();
+}
+
+function removeTypingIndicator() {
+    const el = document.getElementById('wa-typing');
+    if (el) el.remove();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML.replace(/\n/g, '<br>');
+}
+
+// ============================================================
+// Send Message (Inference)
+// ============================================================
+
+async function sendMessage() {
+    const input = document.getElementById('wa-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    toggleSendIcon(); // Reset to mic
+
+    addMessage(text, 'user');
+
+    // Update status
+    const statusEl = document.getElementById('wa-status');
+    const originalStatus = 'TinyLlama 1.1B \u2022 Online';
+    if (statusEl) statusEl.textContent = 'typing...';
+
+    // Show typing indicator
+    addTypingIndicator();
+
+    // Disable inputs? Maybe not for "same to same" feel, but good for logic.
+
     try {
-        const res = await fetch(`${API_BASE}${path}`, {
+        const start = performance.now();
+        const res = await fetch(API_BASE + '/infer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ text: text })
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-    } catch (e) {
-        console.error(`API POST ${path} failed:`, e);
-        return null;
+        const data = await res.json();
+        const elapsed = performance.now() - start;
+
+        removeTypingIndicator();
+
+        if (data.response) {
+            addMessage(data.response, 'ai', {
+                latency_ms: data.latency_ms || elapsed,
+                drift_detected: data.drift_detected
+            });
+
+            // Update telemetry panel
+            updateTelemetryPanel({
+                latency_ms: data.latency_ms || elapsed,
+                request_id: data.request_id || '-',
+                drift_detected: data.drift_detected || false,
+                drift_score: data.drift_score || 0
+            });
+        } else if (data.detail) {
+            addMessage('Error: ' + data.detail, 'ai');
+        }
+    } catch (err) {
+        removeTypingIndicator();
+        addMessage('Connection error. Please check if the server is running.', 'ai');
+    }
+
+    if (statusEl) statusEl.textContent = originalStatus;
+    input.focus();
+}
+
+function updateTelemetryPanel(info) {
+    // Keep this function as is, or update if we moved it
+    const panel = document.getElementById('wa-telemetry-info');
+    if (!panel) return;
+
+    panel.innerHTML = '' +
+        '<div class="tele-row"><span class="tele-label">Request ID</span><span class="tele-value" style="font-size:.7rem">' + (info.request_id || '-') + '</span></div>' +
+        '<div class="tele-row"><span class="tele-label">Latency</span><span class="tele-value">' + (info.latency_ms ? info.latency_ms.toFixed(1) + ' ms' : '-') + '</span></div>' +
+        '<div class="tele-row"><span class="tele-label">Drift</span><span class="tele-value">' + (info.drift_detected ? '<span style="color:var(--warning)">Yes (' + (info.drift_score || 0).toFixed(3) + ')</span>' : '<span style="color:var(--success)">No</span>') + '</span></div>';
+}
+
+function clearChat() {
+    const body = document.getElementById('wa-chat-body');
+    // Keep the encryption message
+    const encMsg = '<div class="wa-encryption-msg"><span class="lock-icon">\uD83D\uDD12</span> Messages are end-to-end encrypted. No one outside of this chat, not even WhatsApp, can read or listen to them. Click to learn more.</div>';
+
+    body.innerHTML = encMsg +
+        '<div class="wa-date-divider"><span>Today</span></div>' +
+        '<div class="wa-message wa-incoming"><div class="wa-bubble">' +
+        '<div class="wa-text">Chat cleared. How can I help you? \uD83E\uDDE0</div>' +
+        '<div class="wa-meta"><span class="wa-time">' + formatTime(new Date()) + '</span></div>' +
+        '</div></div>';
+}
+
+function toggleSendIcon() {
+    const input = document.getElementById('wa-input');
+    const micIcon = document.getElementById('wa-mic-icon');
+    const sendIcon = document.getElementById('wa-send-icon');
+    const btn = document.getElementById('wa-mic-btn');
+
+    if (input.value.trim().length > 0) {
+        if (micIcon) micIcon.style.display = 'none';
+        if (sendIcon) sendIcon.style.display = 'block';
+        if (btn) btn.title = "Send";
+    } else {
+        if (micIcon) micIcon.style.display = 'block';
+        if (sendIcon) sendIcon.style.display = 'none';
+        if (btn) btn.title = "Voice Message";
     }
 }
 
-function formatNum(n) {
-    if (n === null || n === undefined) return '0';
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return String(n);
-}
+// Handle Enter key + Input changes
+document.addEventListener('DOMContentLoaded', () => {
+    setWelcomeTime();
+    const input = document.getElementById('wa-input');
 
-function truncateId(id) {
-    if (!id) return '-';
-    return id.substring(0, 8) + '...';
-}
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
 
-function formatTime(iso) {
-    if (!iso) return '-';
-    try {
-        const d = new Date(iso);
-        return d.toLocaleTimeString() + ' ' + d.toLocaleDateString();
-    } catch {
-        return iso;
+        input.addEventListener('input', toggleSendIcon);
     }
-}
+});
 
-function formatUptime(seconds) {
-    if (!seconds) return '0s';
-    if (seconds < 60) return Math.round(seconds) + 's';
-    if (seconds < 3600) return Math.round(seconds / 60) + 'm';
-    return (seconds / 3600).toFixed(1) + 'h';
-}
 
 // ============================================================
-// Overview
+// Overview Tab
 // ============================================================
 
 async function loadOverview() {
-    const health = await apiGet('/health');
-    const telemetry = await apiGet('/telemetry?limit=10');
-    const drift = await apiGet('/drift?limit=10');
-    const registry = await apiGet('/registry');
+    try {
+        const res = await fetch(API_BASE + '/health');
+        const data = await res.json();
 
-    if (health) {
-        document.getElementById('header-model').textContent = `Model: ${health.model_version}`;
-        document.getElementById('header-uptime').textContent = `⏱ ${formatUptime(health.uptime_seconds)}`;
-        document.getElementById('ov-model').textContent = health.model_version;
-        document.getElementById('ov-requests').textContent = formatNum(health.total_requests);
-        document.getElementById('ov-uptime-text').textContent = formatUptime(health.uptime_seconds);
-    }
+        setText('ov-model', data.model_version || 'base');
+        setText('header-model', 'Model: ' + (data.model_version || 'base'));
 
-    if (telemetry && telemetry.summary) {
-        const s = telemetry.summary;
-        document.getElementById('ov-latency').innerHTML =
-            `${s.avg_latency_ms || 0}<span style="font-size:0.9rem">ms</span>`;
-        document.getElementById('ov-tokens').textContent =
-            formatNum((s.total_input_tokens || 0) + (s.total_output_tokens || 0));
-        document.getElementById('ov-lat-range').textContent =
-            `${s.min_latency_ms || 0}ms – ${s.max_latency_ms || 0}ms`;
-    }
+        const uptime = data.uptime_seconds || 0;
+        const uptimeStr = uptime > 3600 ? (uptime / 3600).toFixed(1) + 'h' :
+            uptime > 60 ? (uptime / 60).toFixed(1) + 'm' :
+                uptime.toFixed(0) + 's';
+        setText('header-uptime', '\u23F1 ' + uptimeStr);
+        setText('ov-uptime-text', uptimeStr);
+        setText('ov-requests', data.total_requests || 0);
+    } catch { }
 
-    if (drift && drift.history) {
-        document.getElementById('ov-drifts').textContent = drift.history.length;
-    }
+    try {
+        const res = await fetch(API_BASE + '/telemetry');
+        const data = await res.json();
+        if (data && data.recent_requests) {
+            const reqs = data.recent_requests;
+            setText('ov-requests', reqs.length);
+            if (reqs.length > 0) {
+                const latencies = reqs.map(r => r.latency_ms || 0);
+                const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+                setText('ov-latency', avg.toFixed(0));
+                setText('ov-lat-range', Math.min(...latencies).toFixed(0) + 'ms – ' + Math.max(...latencies).toFixed(0) + 'ms');
 
-    if (registry && registry.models) {
-        document.getElementById('ov-evolutions').textContent = registry.models.length;
-    }
+                const tokens = reqs.reduce((sum, r) => sum + (r.input_tokens || 0) + (r.output_tokens || 0), 0);
+                setText('ov-tokens', tokens);
 
-    // Recent activity
-    if (telemetry && telemetry.recent_requests && telemetry.recent_requests.length > 0) {
-        const activityEl = document.getElementById('ov-activity');
-        const timeline = document.createElement('div');
-        timeline.className = 'timeline';
+                const drifts = reqs.filter(r => r.drift_detected).length;
+                setText('ov-drifts', drifts);
 
-        telemetry.recent_requests.slice(0, 5).forEach(req => {
-            timeline.innerHTML += `
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <div class="timeline-title">Inference Request</div>
-                        <div class="timeline-desc">${req.input_tokens} in → ${req.output_tokens} out | ${Math.round(req.latency_ms)}ms</div>
-                        <div class="timeline-time">${formatTime(req.timestamp)}</div>
-                    </div>
-                </div>`;
-        });
+                // Recent activity
+                const actEl = document.getElementById('ov-activity');
+                if (actEl && reqs.length > 0) {
+                    const recent = reqs.slice(-5).reverse();
+                    actEl.innerHTML = recent.map(r => {
+                        const drift = r.drift_detected ? ' <span style="color:var(--warning)">🌊</span>' : '';
+                        return '<div style="padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.82rem">' +
+                            '<span style="color:var(--text-muted);font-size:.7rem">' + (r.request_id || '').slice(0, 8) + '</span> ' +
+                            '<span style="color:var(--text-secondary)">' + (r.prompt || '').slice(0, 50) + '</span>' + drift +
+                            ' <span style="float:right;color:var(--accent);font-size:.75rem">' + (r.latency_ms || 0).toFixed(0) + 'ms</span>' +
+                            '</div>';
+                    }).join('');
+                }
+            }
+        }
+    } catch { }
 
-        activityEl.innerHTML = '';
-        activityEl.appendChild(timeline);
-    }
+    try {
+        const res = await fetch(API_BASE + '/registry');
+        const data = await res.json();
+        if (data && data.models) {
+            setText('ov-evolutions', data.models.length);
+        }
+    } catch { }
 }
 
 // ============================================================
-// Inference
-// ============================================================
-
-async function runInference() {
-    const input = document.getElementById('infer-input');
-    const btn = document.getElementById('infer-btn');
-    const text = input.value.trim();
-
-    if (!text) {
-        showToast('Please enter a prompt', 'error');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Generating...';
-    document.getElementById('infer-response').textContent = 'Thinking...';
-
-    const data = await apiPost('/infer', { text });
-
-    btn.disabled = false;
-    btn.innerHTML = 'Generate';
-
-    if (data) {
-        document.getElementById('infer-response').textContent = data.response;
-        document.getElementById('infer-meta').style.display = 'flex';
-        document.getElementById('infer-latency').textContent = `${data.latency_ms}ms`;
-        document.getElementById('infer-id').textContent = truncateId(data.request_id);
-        document.getElementById('infer-drift').textContent =
-            `${data.drift_score || 0} ${data.drift_detected ? '⚠️' : '✅'}`;
-
-        showToast('Inference completed', 'success');
-        loadTelemetry();
-    } else {
-        document.getElementById('infer-response').textContent = 'Error: Failed to get response.';
-        showToast('Inference failed', 'error');
-    }
-}
-
-// ============================================================
-// Telemetry
+// Telemetry Tab
 // ============================================================
 
 async function loadTelemetry() {
-    const data = await apiGet('/telemetry?limit=30');
-    if (!data) return;
+    try {
+        const res = await fetch(API_BASE + '/telemetry');
+        const data = await res.json();
+        if (!data || !data.recent_requests) return;
 
-    const s = data.summary || {};
-    document.getElementById('tel-total').textContent = formatNum(s.total_requests);
-    document.getElementById('tel-avg-lat').innerHTML =
-        `${s.avg_latency_ms || 0}<span style="font-size:0.9rem">ms</span>`;
-    document.getElementById('tel-min-lat').innerHTML =
-        `${s.min_latency_ms || 0}<span style="font-size:0.9rem">ms</span>`;
-    document.getElementById('tel-max-lat').innerHTML =
-        `${s.max_latency_ms || 0}<span style="font-size:0.9rem">ms</span>`;
+        const reqs = data.recent_requests;
+        setText('tel-total', reqs.length);
 
-    // Latency chart
-    const chart = document.getElementById('tel-latency-chart');
-    chart.innerHTML = '';
+        if (reqs.length > 0) {
+            const latencies = reqs.map(r => r.latency_ms || 0);
+            const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+            setText('tel-avg-lat', avg.toFixed(0));
+            setText('tel-min-lat', Math.min(...latencies).toFixed(0));
+            setText('tel-max-lat', Math.max(...latencies).toFixed(0));
 
-    if (data.recent_requests && data.recent_requests.length > 0) {
-        const requests = [...data.recent_requests].reverse();
-        const maxLat = Math.max(...requests.map(r => r.latency_ms), 1);
+            // Latency chart
+            const chart = document.getElementById('tel-latency-chart');
+            if (chart) {
+                const recent = latencies.slice(-30);
+                const maxL = Math.max(...recent, 1);
+                chart.innerHTML = recent.map((l, i) => {
+                    const pct = (l / maxL) * 100;
+                    return '<div style="flex:1;background:var(--accent);min-width:4px;border-radius:2px 2px 0 0;height:' + pct + '%;transition:height .3s" title="' + l.toFixed(0) + 'ms"></div>';
+                }).join('');
+            }
+        }
 
-        requests.forEach(req => {
-            const height = Math.max(4, (req.latency_ms / maxLat) * 130);
-            const color = req.latency_ms > 2000 ? 'var(--danger)' :
-                req.latency_ms > 1000 ? 'var(--warning)' : 'var(--accent-primary)';
-            const bar = document.createElement('div');
-            bar.style.cssText = `
-                flex: 1; max-width: 30px; height: ${height}px;
-                background: ${color}; border-radius: 3px 3px 0 0;
-                transition: height 0.3s ease; cursor: pointer;
-                opacity: 0.8; min-width: 6px;
-            `;
-            bar.title = `${Math.round(req.latency_ms)}ms`;
-            bar.addEventListener('mouseenter', () => bar.style.opacity = '1');
-            bar.addEventListener('mouseleave', () => bar.style.opacity = '0.8');
-            chart.appendChild(bar);
-        });
-    }
-
-    // History table
-    const tbody = document.getElementById('infer-history-body');
-    tbody.innerHTML = '';
-
-    if (data.recent_requests) {
-        data.recent_requests.slice(0, 15).forEach(req => {
-            tbody.innerHTML += `<tr>
-                <td><code>${truncateId(req.request_id)}</code></td>
-                <td>${req.input_tokens}</td>
-                <td>${req.output_tokens}</td>
-                <td>${Math.round(req.latency_ms)}</td>
-                <td>${formatTime(req.timestamp)}</td>
-            </tr>`;
-        });
-    }
-
-    // Structural telemetry
-    const structural = await apiGet('/telemetry/structural?limit=5');
-    if (structural && structural.structural_telemetry) {
-        document.getElementById('tel-structural').textContent =
-            JSON.stringify(structural.structural_telemetry.slice(0, 3), null, 2);
+        // Structural telemetry
+        const structEl = document.getElementById('tel-structural');
+        if (structEl && data.latest_structural) {
+            structEl.textContent = JSON.stringify(data.latest_structural, null, 2);
+        }
+    } catch (e) {
+        showToast('Failed to load telemetry', 'error');
     }
 }
 
 // ============================================================
-// Structural Analysis
+// Analysis Tab
 // ============================================================
 
 async function runAnalysis() {
     const btn = document.getElementById('analysis-btn');
-    btn.disabled = true;
-    btn.textContent = 'Analyzing...';
+    if (btn) { btn.disabled = true; btn.textContent = 'Analyzing...'; }
 
-    const data = await apiGet('/analysis');
+    try {
+        const res = await fetch(API_BASE + '/analysis');
+        const data = await res.json();
 
-    btn.disabled = false;
-    btn.textContent = 'Run Analysis';
+        const resultEl = document.getElementById('analysis-result');
+        if (resultEl) {
+            // Display the nested analysis object if available
+            const toShow = data.analysis || data;
+            resultEl.innerHTML = '<pre class="json-view">' + JSON.stringify(toShow, null, 2) + '</pre>';
+        }
 
-    if (!data || data.status === 'NO_DATA') {
-        document.getElementById('analysis-result').innerHTML = `
-            <div class="empty-state">
-                <div class="icon">📭</div>
-                <p>${data?.message || 'No telemetry data available. Run some inferences first.'}</p>
-            </div>`;
-        return;
+        const prunableEl = document.getElementById('analysis-prunable');
+        // Backend returns analysis.prunable_attention_blocks
+        const blocks = data.analysis ? data.analysis.prunable_attention_blocks : data.prunable_blocks;
+
+        if (prunableEl && blocks) {
+            prunableEl.innerHTML = blocks.map(b =>
+                '<div style="padding:.35rem .6rem;margin:.25rem 0;background:var(--bg-input);border-radius:6px;font-size:.82rem;display:flex;justify-content:space-between">' +
+                '<span>' + b + '</span>' +
+                '</div>'
+            ).join('');
+        }
+
+        const recsEl = document.getElementById('analysis-recs');
+        // Backend returns analysis.rewiring_recommendations
+        const recs = data.analysis ? data.analysis.rewiring_recommendations : data.recommendations;
+
+        if (recsEl && recs) {
+            recsEl.innerHTML = recs.map(r =>
+                '<div style="padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.82rem;color:var(--text-secondary)">\u2022 ' + (r.description || r) + '</div>'
+            ).join('');
+        }
+
+        showToast('Analysis complete', 'success');
+    } catch (e) {
+        showToast('Analysis failed', 'error');
     }
-
-    const a = data.analysis;
-
-    // Main result
-    document.getElementById('analysis-result').innerHTML = `
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Prunable Blocks</div>
-                <div class="stat-value">${(a.prunable_attention_blocks || []).length}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Risk Score</div>
-                <div class="stat-value">${a.pruning_risk_score || 0}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Redundant FFN</div>
-                <div class="stat-value">${(a.redundant_ffn_layers || []).length}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Recommendations</div>
-                <div class="stat-value">${(a.rewiring_recommendations || []).length}</div>
-            </div>
-        </div>`;
-
-    // Prunable blocks
-    const prunableEl = document.getElementById('analysis-prunable');
-    if (a.prunable_attention_blocks && a.prunable_attention_blocks.length > 0) {
-        prunableEl.innerHTML = '<ul class="rec-list">' +
-            a.prunable_attention_blocks.map(b => `
-                <li class="rec-item">
-                    <div class="rec-type">Prunable</div>
-                    <div class="rec-desc">${b}</div>
-                </li>`).join('') + '</ul>';
-    } else {
-        prunableEl.innerHTML = '<div class="empty-state"><p>No prunable blocks found</p></div>';
-    }
-
-    // Recommendations
-    const recsEl = document.getElementById('analysis-recs');
-    if (a.rewiring_recommendations && a.rewiring_recommendations.length > 0) {
-        recsEl.innerHTML = '<ul class="rec-list">' +
-            a.rewiring_recommendations.map(r => `
-                <li class="rec-item">
-                    <div class="rec-type">${r.type}</div>
-                    <div class="rec-desc">${r.description}</div>
-                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">
-                        ${r.estimated_speedup ? '⚡ ' + r.estimated_speedup : ''}
-                        ${r.estimated_memory_saving ? ' 💾 ' + r.estimated_memory_saving : ''}
-                    </div>
-                </li>`).join('') + '</ul>';
-    }
-
-    showToast('Analysis complete', 'success');
+    if (btn) { btn.disabled = false; btn.textContent = 'Run Analysis'; }
 }
 
 // ============================================================
-// Evolution
+// Evolution Tab
 // ============================================================
 
 async function triggerEvolution() {
     const btn = document.getElementById('evolve-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Evolving...';
-
+    if (btn) { btn.disabled = true; btn.textContent = '\u23F3 Evolving...'; }
     const statusEl = document.getElementById('evolution-status');
-    statusEl.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-muted)">' +
-        '<span class="spinner"></span> Running evolution cycle... This may take a minute.</div>';
+    if (statusEl) statusEl.innerHTML = '<div style="color:var(--accent);padding:1rem;text-align:center">\uD83E\uDDEC Evolution cycle running...<br><small>This may take a moment</small></div>';
 
-    const data = await apiPost('/evolve', { triggered_by: 'dashboard' });
+    try {
+        const res = await fetch(API_BASE + '/evolve', { method: 'POST' });
+        const data = await res.json();
 
-    btn.disabled = false;
-    btn.innerHTML = '🚀 Trigger Evolution';
-
-    if (data && data.result) {
-        const r = data.result;
-        const status = r.evolution_status || r.status || 'UNKNOWN';
-        const badge = status === 'APPROVED' ? 'badge-success' :
-            status === 'REJECTED' ? 'badge-danger' :
-                status === 'ERROR' ? 'badge-danger' : 'badge-warning';
-
-        // Build detail sections
-        let details = '';
-        if (r.architecture_diff) {
-            const diff = r.architecture_diff;
-            details += `
-                <div style="margin-top:0.75rem;padding:0.5rem;background:var(--bg-secondary);border-radius:6px">
-                    <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.25rem">Architecture Changes</div>
-                    <div style="font-size:0.75rem;color:var(--text-muted)">
-                        Version: <strong>${diff.version || '-'}</strong> |
-                        Params: ${(diff.base_parameters || 0).toLocaleString()} → ${(diff.optimized_parameters || 0).toLocaleString()} |
-                        Reduction: ${diff.reduction_percent || 0}%
-                    </div>
-                </div>`;
-        }
-        if (r.validation) {
-            const v = r.validation;
-            details += `
-                <div style="margin-top:0.5rem;padding:0.5rem;background:var(--bg-secondary);border-radius:6px">
-                    <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.25rem">Validation</div>
-                    <div style="font-size:0.75rem;color:var(--text-muted)">
-                        Similarity: ${v.similarity_score || '-'} |
-                        Accuracy Drop: ${v.accuracy_drop_percent || 0}% |
-                        Hallucination: ${v.hallucination_rate || 0} |
-                        Status: <strong>${v.status || '-'}</strong>
-                    </div>
-                </div>`;
-        }
-        if (r.error) {
-            details += `
-                <div style="margin-top:0.5rem;padding:0.5rem;background:rgba(255,80,80,0.1);border-radius:6px">
-                    <div style="font-size:0.8rem;font-weight:600;color:var(--danger);margin-bottom:0.25rem">Error</div>
-                    <div style="font-size:0.75rem;color:var(--text-muted)">${r.error}</div>
-                </div>`;
+        if (statusEl) {
+            statusEl.innerHTML = '<pre class="json-view">' + JSON.stringify(data, null, 2) + '</pre>';
         }
 
-        statusEl.innerHTML = `
-            <div style="padding:1rem;border:1px solid var(--border-subtle);border-radius:var(--radius-md)">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-                    <strong>Evolution Result</strong>
-                    <span class="badge ${badge}">${status}</span>
-                </div>
-                ${details}
-                <details style="margin-top:0.75rem">
-                    <summary style="font-size:0.75rem;color:var(--text-muted);cursor:pointer">Raw JSON</summary>
-                    <div class="json-view" style="margin-top:0.5rem">${JSON.stringify(r, null, 2)}</div>
-                </details>
-            </div>`;
-
-        const toastType = status === 'APPROVED' ? 'success' :
-            status === 'ERROR' ? 'error' : 'info';
-        showToast(`Evolution: ${status}`, toastType);
-
-        // Refresh dashboard data
+        showToast('Evolution complete: ' + (data.status || 'done'), data.status === 'success' ? 'success' : 'info');
         loadOverview();
-        loadRegistry();
-    } else {
-        statusEl.innerHTML = `
-            <div style="padding:1rem;color:var(--danger)">
-                <strong>Evolution failed</strong><br>
-                <span style="font-size:0.85rem">Could not reach the server. Check that the backend is running.</span>
-            </div>`;
-        showToast('Evolution failed — server unreachable', 'error');
+        loadEvolutionHistory();
+    } catch (e) {
+        if (statusEl) statusEl.innerHTML = '<div style="color:var(--danger);padding:1rem">\u274C Evolution failed</div>';
+        showToast('Evolution failed', 'error');
     }
+    if (btn) { btn.disabled = false; btn.textContent = '\uD83D\uDE80 Trigger Evolution'; }
+}
+
+async function loadEvolutionHistory() {
+    try {
+        const res = await fetch(API_BASE + '/evolution-history');
+        const data = await res.json();
+        const el = document.getElementById('evolution-history');
+        if (!el) return;
+
+        if (data.entries && data.entries.length > 0) {
+            el.innerHTML = data.entries.slice().reverse().map(e =>
+                '<div style="padding:.5rem .75rem;margin:.25rem 0;background:var(--bg-input);border-radius:8px;border-left:3px solid ' + (e.validation_status === 'PASS' ? 'var(--success)' : 'var(--danger)') + '">' +
+                '<div style="display:flex;justify-content:space-between;font-size:.82rem">' +
+                '<span style="font-weight:600">' + (e.version || 'unknown') + '</span>' +
+                '<span class="badge ' + (e.validation_status === 'PASS' ? 'pass' : 'fail') + '">' + (e.validation_status || '-') + '</span>' +
+                '</div>' +
+                '<div style="font-size:.72rem;color:var(--text-muted);margin-top:.2rem">' + (e.timestamp || '') + '</div>' +
+                '</div>'
+            ).join('');
+        }
+    } catch { }
 }
 
 async function runProfiler() {
-    showToast('Running profiler...', 'info');
-    const data = await apiPost('/profiler/run');
-
-    if (data) {
-        document.getElementById('profiler-result').textContent =
-            JSON.stringify(data, null, 2);
-        showToast('Profiling complete', 'success');
-    } else {
-        showToast('Profiling failed', 'error');
+    try {
+        const res = await fetch(API_BASE + '/profiler/report');
+        const data = await res.json();
+        const el = document.getElementById('profiler-result');
+        if (el) el.textContent = JSON.stringify(data, null, 2);
+        showToast('Profiler report generated', 'success');
+    } catch (e) {
+        showToast('Failed to generate report', 'error');
     }
 }
 
 // ============================================================
-// Model Registry
+// Registry Tab
 // ============================================================
 
 async function loadRegistry() {
-    const data = await apiGet('/registry');
-    if (!data) return;
+    try {
+        const res = await fetch(API_BASE + '/registry');
+        const data = await res.json();
+        const bodyEl = document.getElementById('registry-body');
+        const emptyEl = document.getElementById('registry-empty');
+        const summaryEl = document.getElementById('registry-summary');
 
-    const tbody = document.getElementById('registry-body');
-    const emptyEl = document.getElementById('registry-empty');
-    const summaryEl = document.getElementById('registry-summary');
+        if (!data || !data.models || data.models.length === 0) {
+            if (bodyEl) bodyEl.innerHTML = '';
+            if (emptyEl) emptyEl.style.display = 'block';
+            if (summaryEl) summaryEl.innerHTML = '';
+            return;
+        }
 
-    if (data.summary) {
-        const s = data.summary;
-        summaryEl.innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total Versions</div>
-                    <div class="stat-value">${s.total_versions || 0}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Latest Version</div>
-                    <div class="stat-value" style="font-size:1.2rem">${s.latest_version || 'base'}</div>
-                </div>
-            </div>`;
-    }
+        if (emptyEl) emptyEl.style.display = 'none';
 
-    tbody.innerHTML = '';
+        if (summaryEl) {
+            summaryEl.innerHTML = '<div style="font-size:.82rem;color:var(--text-secondary)">' +
+                'Total versions: <strong>' + data.models.length + '</strong> | ' +
+                'Active: <strong>' + (data.active || 'base') + '</strong></div>';
+        }
 
-    if (data.models && data.models.length > 0) {
-        emptyEl.style.display = 'none';
-
-        data.models.forEach(m => {
-            const validBadge = m.validation_status === 'PASS' ? 'badge-success' : 'badge-danger';
-            const optText = Array.isArray(m.optimization) ? m.optimization.join(', ') :
-                (m.optimization || 'unknown');
-
-            tbody.innerHTML += `<tr>
-                <td><strong>${m.version}</strong></td>
-                <td>${m.parent_version || '-'}</td>
-                <td>${optText}</td>
-                <td>${m.compression_percent || 0}%</td>
-                <td>${m.accuracy_drop_percent || 0}%</td>
-                <td><span class="badge ${validBadge}">${m.validation_status || '-'}</span></td>
-                <td>${formatTime(m.timestamp)}</td>
-            </tr>`;
-        });
-    } else {
-        emptyEl.style.display = 'block';
+        if (bodyEl) {
+            bodyEl.innerHTML = data.models.map(e =>
+                '<tr>' +
+                '<td style="font-weight:600">' + (e.version || '-') + '</td>' +
+                '<td>' + (e.parent || '-') + '</td>' +
+                '<td>' + (e.optimization || '-') + '</td>' +
+                '<td>' + (e.compression_ratio ? (e.compression_ratio * 100).toFixed(1) + '%' : '-') + '</td>' +
+                '<td>' + (e.accuracy_drop != null ? e.accuracy_drop.toFixed(1) + '%' : '-') + '</td>' +
+                '<td><span class="badge ' + (e.validation === 'PASS' ? 'pass' : 'fail') + '">' + (e.validation || '-') + '</span></td>' +
+                '<td style="font-size:.72rem;color:var(--text-muted)">' + (e.timestamp || '-') + '</td>' +
+                '</tr>'
+            ).join('');
+        }
+    } catch (e) {
+        showToast('Failed to load registry', 'error');
     }
 }
 
 // ============================================================
-// Drift Detection
+// Drift Tab
 // ============================================================
+
+let driftHistory = [];
 
 async function loadDrift() {
-    const data = await apiGet('/drift?limit=30');
-    if (!data) return;
+    try {
+        const res = await fetch(API_BASE + '/telemetry');
+        const data = await res.json();
+        if (!data || !data.recent_requests) return;
 
-    // Detector status
-    if (data.detector_status) {
-        document.getElementById('drift-mem-size').textContent = data.detector_status.memory_size || 0;
-    }
+        const reqs = data.recent_requests.filter(r => r.drift_score !== undefined && r.drift_score !== null);
+        driftHistory = reqs;
 
-    // History chart & table
-    const chart = document.getElementById('drift-chart');
-    const tbody = document.getElementById('drift-history-body');
-    chart.innerHTML = '';
-    tbody.innerHTML = '';
+        const events = reqs.filter(r => r.drift_detected);
+        setText('drift-events-count', events.length);
 
-    if (data.history && data.history.length > 0) {
-        document.getElementById('drift-events-count').textContent = data.history.length;
+        if (reqs.length > 0) {
+            const latest = reqs[reqs.length - 1];
+            setText('drift-current-score', (latest.drift_score || 0).toFixed(3));
+            setText('drift-mem-size', reqs.length);
 
-        // Latest score
-        const latest = data.history[0];
-        const score = latest.drift_score || 0;
-        document.getElementById('drift-current-score').textContent = score.toFixed(4);
+            const circle = document.getElementById('drift-circle');
+            if (circle) {
+                const s = latest.drift_score || 0;
+                circle.className = 'drift-circle ' + (s > 0.5 ? 'high' : s > 0.25 ? 'medium' : 'low');
+            }
 
-        const circle = document.getElementById('drift-circle');
-        circle.className = 'drift-circle ' +
-            (score > 0.35 ? 'high' : score > 0.15 ? 'medium' : 'low');
+            // Drift chart
+            const chart = document.getElementById('drift-chart');
+            if (chart) {
+                const recent = reqs.slice(-25);
+                chart.innerHTML = recent.map(r => {
+                    const s = r.drift_score || 0;
+                    const pct = Math.min(s * 200, 100);
+                    const color = s > 0.5 ? 'var(--danger)' : s > 0.25 ? 'var(--warning)' : 'var(--success)';
+                    return '<div style="flex:1;background:' + color + ';min-width:4px;border-radius:2px 2px 0 0;height:' + pct + '%;opacity:.8" title="' + s.toFixed(3) + '"></div>';
+                }).join('');
+            }
 
-        // Chart
-        const entries = [...data.history].reverse().slice(-30);
-        const maxScore = Math.max(...entries.map(e => e.drift_score), 0.1);
-
-        entries.forEach(entry => {
-            const height = Math.max(4, (entry.drift_score / maxScore) * 100);
-            const color = entry.drift_flag ? 'var(--danger)' : 'var(--success)';
-            const bar = document.createElement('div');
-            bar.style.cssText = `
-                flex: 1; max-width: 20px; height: ${height}px;
-                background: ${color}; border-radius: 2px 2px 0 0;
-                min-width: 4px; opacity: 0.8; cursor: pointer;
-            `;
-            bar.title = `Score: ${entry.drift_score}`;
-            chart.appendChild(bar);
-        });
-
-        // Table
-        data.history.slice(0, 10).forEach(d => {
-            tbody.innerHTML += `<tr>
-                <td>${(d.drift_score || 0).toFixed(4)}</td>
-                <td><span class="badge ${d.drift_flag ? 'badge-danger' : 'badge-success'}">${d.drift_flag ? 'DRIFT' : 'OK'}</span></td>
-                <td>${(d.embedding_shift || 0).toFixed(4)}</td>
-                <td>${(d.vocab_shift || 0).toFixed(4)}</td>
-                <td>${formatTime(d.timestamp)}</td>
-            </tr>`;
-        });
-    }
+            // History table
+            const tbody = document.getElementById('drift-history-body');
+            if (tbody) {
+                tbody.innerHTML = reqs.slice(-10).reverse().map(r =>
+                    '<tr>' +
+                    '<td>' + (r.drift_score || 0).toFixed(3) + '</td>' +
+                    '<td>' + (r.drift_detected ? '<span style="color:var(--warning)">\u26A0</span>' : '<span style="color:var(--success)">\u2713</span>') + '</td>' +
+                    '<td>' + ((r.drift_components || {}).embedding_shift || 0).toFixed(3) + '</td>' +
+                    '<td>' + ((r.drift_components || {}).vocab_shift || 0).toFixed(3) + '</td>' +
+                    '<td style="font-size:.72rem;color:var(--text-muted)">' + (r.timestamp || '-') + '</td>' +
+                    '</tr>'
+                ).join('');
+            }
+        }
+    } catch { }
 }
 
 // ============================================================
-// Governance
+// Governance Tab
 // ============================================================
 
 async function loadGovernance() {
-    const data = await apiGet('/governance/audit?limit=20');
-    if (!data) return;
+    try {
+        const res = await fetch(API_BASE + '/governance');
+        const data = await res.json();
 
-    // Summary
-    if (data.summary) {
-        const s = data.summary;
-        document.getElementById('gov-summary').innerHTML = `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.85rem">
-                <div>
-                    <div style="color:var(--text-muted);font-size:0.7rem">CURRENT MODEL</div>
-                    <div style="font-weight:600">${s.current_model || 'base'}</div>
-                </div>
-                <div>
-                    <div style="color:var(--text-muted);font-size:0.7rem">TOTAL EVOLUTIONS</div>
-                    <div style="font-weight:600">${s.total_evolutions || 0}</div>
-                </div>
-                <div>
-                    <div style="color:var(--text-muted);font-size:0.7rem">AUDIT EVENTS</div>
-                    <div style="font-weight:600">${s.recent_audit_events || 0}</div>
-                </div>
-                <div>
-                    <div style="color:var(--text-muted);font-size:0.7rem">LAST ACTION</div>
-                    <div style="font-weight:600">${s.last_audit_action || 'none'}</div>
-                </div>
-            </div>`;
-    }
+        const summaryEl = document.getElementById('gov-summary');
+        if (summaryEl) {
+            summaryEl.innerHTML = '<div style="font-size:.85rem">' +
+                '<div style="margin-bottom:.5rem"><strong>Active Model:</strong> ' + (data.active_model || 'base') + '</div>' +
+                '<div><strong>Backup Available:</strong> ' + (data.backup_available ? '<span style="color:var(--success)">Yes</span>' : '<span style="color:var(--text-muted)">No</span>') + '</div>' +
+                '</div>';
+        }
 
-    // Audit log
-    const auditEl = document.getElementById('gov-audit');
-    if (data.audit_log && data.audit_log.length > 0) {
-        const timeline = document.createElement('div');
-        timeline.className = 'timeline';
-
-        data.audit_log.forEach(evt => {
-            const badge = evt.status === 'APPROVED' ? 'badge-success' :
-                evt.status === 'REJECTED' ? 'badge-danger' :
-                    evt.status === 'OK' ? 'badge-success' : 'badge-neutral';
-
-            timeline.innerHTML += `
-                <div class="timeline-item">
-                    <div class="timeline-dot"></div>
-                    <div class="timeline-content">
-                        <div class="timeline-title">
-                            ${evt.action} <span class="badge ${badge}">${evt.status}</span>
-                        </div>
-                        <div class="timeline-desc">Version: ${evt.version} | By: ${evt.triggered_by}</div>
-                        <div class="timeline-time">${formatTime(evt.timestamp)}</div>
-                    </div>
-                </div>`;
-        });
-
-        auditEl.innerHTML = '';
-        auditEl.appendChild(timeline);
+        const auditEl = document.getElementById('gov-audit');
+        if (auditEl && data.audit_log && data.audit_log.length > 0) {
+            auditEl.innerHTML = data.audit_log.slice().reverse().map(e =>
+                '<div style="padding:.5rem .75rem;margin:.25rem 0;background:var(--bg-input);border-radius:8px;font-size:.82rem;border-left:3px solid var(--accent)">' +
+                '<div>' + (e.action || e.event || '-') + '</div>' +
+                '<div style="font-size:.72rem;color:var(--text-muted);margin-top:.15rem">' + (e.timestamp || '-') + '</div>' +
+                '</div>'
+            ).join('');
+        }
+    } catch (e) {
+        showToast('Failed to load governance', 'error');
     }
 }
 
 async function performRollback() {
-    if (!confirm('Are you sure you want to rollback to the previous model version?')) return;
+    if (!confirm('Roll back to the backup model? This will replace the current optimized model.')) return;
 
-    showToast('Rolling back...', 'info');
-    const data = await apiPost('/governance/rollback', { reason: 'Manual rollback from dashboard' });
-
-    if (data) {
-        showToast(`Rollback: ${data.status}`, data.status === 'OK' ? 'success' : 'error');
-        loadOverview();
+    try {
+        const res = await fetch(API_BASE + '/rollback', { method: 'POST' });
+        const data = await res.json();
+        showToast('Rollback: ' + (data.status || 'done'), data.status === 'OK' ? 'success' : 'error');
         loadGovernance();
-    } else {
+        loadOverview();
+    } catch (e) {
         showToast('Rollback failed', 'error');
     }
 }
 
 // ============================================================
-// Auto-Refresh & Init
+// Utilities
 // ============================================================
 
-function init() {
-    loadOverview();
-
-    // Auto-refresh overview every 10 seconds
-    setInterval(() => {
-        const activeTab = document.querySelector('.nav-tab.active');
-        if (activeTab && activeTab.dataset.tab === 'overview') {
-            loadOverview();
-        }
-    }, POLL_INTERVAL);
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
 }
 
-init();
+// ============================================================
+// Init + Polling
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadOverview();
+    loadTelemetry();
+    loadEvolutionHistory();
+    loadRegistry();
+    loadDrift();
+    loadGovernance();
+
+    setInterval(() => {
+        loadOverview();
+        loadTelemetry();
+        loadDrift();
+    }, POLL_INTERVAL);
+});

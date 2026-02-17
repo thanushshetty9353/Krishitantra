@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,414 +8,539 @@
     <title>Krishitantra – SE-SLM Dashboard</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
 
-<!-- ========== Header ========== -->
-<header class="header">
-    <div class="header-inner">
-        <div class="logo">
-            <div class="logo-icon">🧠</div>
-            <span class="logo-text">Krishitantra</span>
-            <span class="logo-badge">SE-SLM v3.0</span>
-        </div>
-        <div class="header-status">
-            <div class="status-indicator">
-                <span class="status-dot"></span>
-                <span id="header-model">Model: base</span>
+    <!-- ========== Header ========== -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <div class="logo-icon">🧠</div>
+                <span class="logo-text">Krishitantra</span>
+                <span class="logo-badge">SE-SLM v3.0</span>
             </div>
-            <div class="status-indicator">
-                <span id="header-uptime">⏱ 0s</span>
-            </div>
-        </div>
-    </div>
-</header>
-
-<!-- ========== Nav Tabs ========== -->
-<main class="main-container">
-    <nav class="nav-tabs" role="tablist">
-        <button class="nav-tab active" data-tab="overview" role="tab">
-            <span class="tab-icon">📊</span> Overview
-        </button>
-        <button class="nav-tab" data-tab="inference" role="tab">
-            <span class="tab-icon">💬</span> Inference
-        </button>
-        <button class="nav-tab" data-tab="telemetry" role="tab">
-            <span class="tab-icon">📈</span> Telemetry
-        </button>
-        <button class="nav-tab" data-tab="analysis" role="tab">
-            <span class="tab-icon">🔬</span> Analysis
-        </button>
-        <button class="nav-tab" data-tab="evolution" role="tab">
-            <span class="tab-icon">🧬</span> Evolution
-        </button>
-        <button class="nav-tab" data-tab="registry" role="tab">
-            <span class="tab-icon">📋</span> Registry
-        </button>
-        <button class="nav-tab" data-tab="drift" role="tab">
-            <span class="tab-icon">🌊</span> Drift
-        </button>
-        <button class="nav-tab" data-tab="governance" role="tab">
-            <span class="tab-icon">🛡️</span> Governance
-        </button>
-    </nav>
-
-    <!-- ====================== -->
-    <!-- OVERVIEW TAB -->
-    <!-- ====================== -->
-    <section id="tab-overview" class="tab-content active">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Requests</div>
-                <div class="stat-value" id="ov-requests">0</div>
-                <div class="stat-sub">Inference calls processed</div>
-                <div class="stat-icon">📨</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Avg Latency</div>
-                <div class="stat-value" id="ov-latency">0<span style="font-size:0.9rem">ms</span></div>
-                <div class="stat-sub">Mean response time</div>
-                <div class="stat-icon">⚡</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Model Version</div>
-                <div class="stat-value" id="ov-model" style="font-size:1.4rem">base</div>
-                <div class="stat-sub">Currently active</div>
-                <div class="stat-icon">🧠</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Drift Events</div>
-                <div class="stat-value" id="ov-drifts">0</div>
-                <div class="stat-sub">Domain shifts detected</div>
-                <div class="stat-icon">🌊</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Tokens Processed</div>
-                <div class="stat-value" id="ov-tokens">0</div>
-                <div class="stat-sub">Input + output tokens</div>
-                <div class="stat-icon">🔤</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Evolutions</div>
-                <div class="stat-value" id="ov-evolutions">0</div>
-                <div class="stat-sub">Model versions created</div>
-                <div class="stat-icon">🧬</div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span id="header-model">Model: base</span>
+                </div>
+                <div class="status-indicator">
+                    <span id="header-uptime">⏱ 0s</span>
+                </div>
             </div>
         </div>
+    </header>
 
-        <div class="grid-2">
+    <!-- ========== Nav Tabs ========== -->
+    <main class="main-container">
+        <nav class="nav-tabs" role="tablist">
+            <button class="nav-tab active" data-tab="overview" role="tab">
+                <span class="tab-icon">📊</span> Overview
+            </button>
+            <button class="nav-tab" data-tab="inference" role="tab">
+                <span class="tab-icon">💬</span> Chat
+            </button>
+            <button class="nav-tab" data-tab="telemetry" role="tab">
+                <span class="tab-icon">📈</span> Telemetry
+            </button>
+            <button class="nav-tab" data-tab="analysis" role="tab">
+                <span class="tab-icon">🔬</span> Analysis
+            </button>
+            <button class="nav-tab" data-tab="evolution" role="tab">
+                <span class="tab-icon">🧬</span> Evolution
+            </button>
+            <button class="nav-tab" data-tab="registry" role="tab">
+                <span class="tab-icon">📋</span> Registry
+            </button>
+            <button class="nav-tab" data-tab="drift" role="tab">
+                <span class="tab-icon">🌊</span> Drift
+            </button>
+            <button class="nav-tab" data-tab="governance" role="tab">
+                <span class="tab-icon">🛡️</span> Governance
+            </button>
+        </nav>
+
+        <!-- ====================== -->
+        <!-- OVERVIEW TAB -->
+        <!-- ====================== -->
+        <section id="tab-overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-value" id="ov-requests">0</div>
+                    <div class="stat-sub">Inference calls processed</div>
+                    <div class="stat-icon">📨</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Latency</div>
+                    <div class="stat-value" id="ov-latency">0<span style="font-size:0.9rem">ms</span></div>
+                    <div class="stat-sub">Mean response time</div>
+                    <div class="stat-icon">⚡</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Model Version</div>
+                    <div class="stat-value" id="ov-model" style="font-size:1.4rem">base</div>
+                    <div class="stat-sub">Currently active</div>
+                    <div class="stat-icon">🧠</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Drift Events</div>
+                    <div class="stat-value" id="ov-drifts">0</div>
+                    <div class="stat-sub">Domain shifts detected</div>
+                    <div class="stat-icon">🌊</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Tokens Processed</div>
+                    <div class="stat-value" id="ov-tokens">0</div>
+                    <div class="stat-sub">Input + output tokens</div>
+                    <div class="stat-icon">🔤</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Evolutions</div>
+                    <div class="stat-value" id="ov-evolutions">0</div>
+                    <div class="stat-sub">Model versions created</div>
+                    <div class="stat-icon">🧬</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">📈</span> Recent Activity</div>
+                    </div>
+                    <div id="ov-activity">
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <p>No activity yet. Send a message in Chat to begin.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">🏥</span> System Health</div>
+                    </div>
+                    <div id="ov-health">
+                        <div class="progress-bar-container">
+                            <div class="progress-label"><span>System Status</span><span
+                                    id="ov-status-text">Healthy</span></div>
+                            <div class="progress-bar">
+                                <div class="progress-fill success" style="width:100%"></div>
+                            </div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-label"><span>Uptime</span><span id="ov-uptime-text">0s</span></div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width:100%"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted)">
+                            <p>Latency range: <span id="ov-lat-range">N/A</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====================== -->
+        <!-- INFERENCE / CHAT TAB (WhatsApp Style) -->
+        <!-- ====================== -->
+        <section id="tab-inference" class="tab-content">
+            <div class="wa-app-wrapper">
+                <!-- Sidebar (Contacts List) - Visual Only for "Same to Same" feel -->
+                <div class="wa-sidebar">
+                    <div class="wa-header">
+                        <div class="wa-avatar-circle user-avatar">
+                            <svg viewBox="0 0 212 212" height="24" width="24" preserveAspectRatio="xMidYMid meet"
+                                class="">
+                                <path fill="currentColor"
+                                    d="M106.251 163.666c-31.545 0-57.116-25.572-57.116-57.117s25.571-57.117 57.116-57.117c31.545 0 57.116 25.572 57.116 57.117s-25.571 57.117-57.116 57.117zM106.251 27c-43.626 0-79.167 35.541-79.167 79.167 0 43.625 35.541 79.166 79.167 79.166 43.626 0 79.167-35.541 79.167-79.166C185.418 62.541 149.877 27 106.251 27z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div class="wa-header-icons">
+                            <button class="wa-icon-btn" title="Community"><svg viewBox="0 0 24 24" width="24"
+                                    height="24" class="">
+                                    <path fill="currentColor"
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z">
+                                    </path>
+                                </svg></button>
+                            <button class="wa-icon-btn" title="Status"><svg viewBox="0 0 24 24" width="24" height="24"
+                                    class="">
+                                    <path fill="currentColor"
+                                        d="M12 20.428c-4.648 0-8.429-3.781-8.429-8.428 0-4.648 3.781-8.429 8.429-8.429 4.648 0 8.428 3.781 8.428 8.429 0 4.647-3.78 8.428-8.428 8.428zM12 5.03c-3.84 0-6.971 3.131-6.971 6.97 0 3.84 3.131 6.971 6.971 6.971 3.84 0 6.97-3.131 6.97-6.971 0-3.839-3.13-6.97-6.97-6.97z">
+                                    </path>
+                                </svg></button>
+                            <button class="wa-icon-btn" title="New Chat"><svg viewBox="0 0 24 24" width="24" height="24"
+                                    class="">
+                                    <path fill="currentColor"
+                                        d="M19.005 3.175H4.674C3.642 3.175 3 3.815 3 4.85v15.302c0 .891.89 1.769 1.947 1.769h14.058c1.056 0 1.946-.878 1.946-1.769V4.85c0-1.034-.643-1.675-1.946-1.675zm-9.332 13.91h-1.57v-3.704H4.398v-1.57h3.705V8.106h1.57v3.705h3.704v1.57H9.673v3.704z">
+                                    </path>
+                                </svg></button>
+                            <button class="wa-icon-btn" title="Menu"><svg viewBox="0 0 24 24" width="24" height="24"
+                                    class="">
+                                    <path fill="currentColor"
+                                        d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z">
+                                    </path>
+                                </svg></button>
+                        </div>
+                    </div>
+                    <!-- Search Bar -->
+                    <div class="wa-search-bar">
+                        <div class="wa-search-input-wrapper">
+                            <span class="wa-search-icon">
+                                <svg viewBox="0 0 24 24" width="24" height="24" class="">
+                                    <path fill="currentColor"
+                                        d="M15.009 13.805h-.636l-.22-.219a5.184 5.184 0 0 0 1.256-3.386 5.207 5.207 0 1 0-5.207 5.208 5.183 5.183 0 0 0 3.385-1.256l.22.22v.635l4.004 3.999 1.194-1.195-3.996-4.006zm-4.715 0a3.805 3.805 0 1 1 3.805-3.805 3.809 3.809 0 0 1-3.805 3.805z">
+                                    </path>
+                                </svg>
+                            </span>
+                            <input type="text" placeholder="Search or start new chat" class="wa-search-input">
+                        </div>
+                        <button class="wa-icon-btn filter-btn"><svg viewBox="0 0 24 24" width="20" height="20"
+                                color="#8696a0">
+                                <path fill="currentColor" d="M10 18.1h4v-2h-4v2zm-7-12v2h18v-2H3zm3 7h12v-2H6v2z">
+                                </path>
+                            </svg></button>
+                    </div>
+                    <!-- Chat List -->
+                    <div class="wa-contact-list">
+                        <div class="wa-contact active">
+                            <div class="wa-avatar">🧠</div>
+                            <div class="wa-contact-info">
+                                <div class="wa-contact-row-1">
+                                    <span class="wa-contact-name">Krishitantra AI</span>
+                                    <span class="wa-contact-time" id="wa-last-time">Now</span>
+                                </div>
+                                <div class="wa-contact-row-2">
+                                    <span class="wa-contact-msg" id="wa-last-msg">...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chat Area -->
+                <div class="wa-chat-area">
+                    <!-- Chat Header -->
+                    <div class="wa-header">
+                        <div class="wa-avatar">🧠</div>
+                        <div class="wa-chat-info">
+                            <div class="wa-chat-name">Krishitantra AI</div>
+                            <div class="wa-chat-status" id="wa-status">click here for contact info</div>
+                        </div>
+                        <div class="wa-header-icons">
+                            <button class="wa-icon-btn" title="Search"><svg viewBox="0 0 24 24" width="24" height="24">
+                                    <path fill="currentColor"
+                                        d="M15.9 14.3H15l-.3-.3c1-1.1 1.6-2.7 1.6-4.3 0-3.7-3-6.7-6.7-6.7S3 6 3 9.7s3 6.7 6.7 6.7c1.6 0 3.2-.6 4.3-1.6l.3.3v.8l5.1 5.1 1.5-1.5-5-5.2zm-6.2 0c-2.6 0-4.6-2.1-4.6-4.6s2.1-4.6 4.6-4.6 4.6 2.1 4.6 4.6-2 4.6-4.6 4.6z">
+                                    </path>
+                                </svg></button>
+                            <button class="wa-icon-btn" title="Menu" onclick="clearChat()"><svg viewBox="0 0 24 24"
+                                    width="24" height="24">
+                                    <path fill="currentColor"
+                                        d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z">
+                                    </path>
+                                </svg></button>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages Area -->
+                    <div class="wa-chat-body" id="wa-chat-body">
+                        <div class="wa-encryption-msg">
+                            <span class="lock-icon">🔒</span> Messages are end-to-end encrypted. No one outside of this
+                            chat, not even WhatsApp, can read or listen to them. Click to learn more.
+                        </div>
+                        <div class="wa-date-divider"><span>Today</span></div>
+                        <div class="wa-message wa-incoming">
+                            <div class="wa-bubble">
+                                <div class="wa-text">Hello! I'm <strong>Krishitantra AI</strong>. How can I help you
+                                    today?</div>
+                                <div class="wa-meta">
+                                    <span class="wa-time" id="wa-welcome-time">--:--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input Footer -->
+                    <div class="wa-chat-footer">
+                        <button class="wa-icon-btn" title="Emoji">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path fill="currentColor"
+                                    d="M9.153 11.603c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962zm-3.204 1.362c-.026-.307-.131 5.218 6.063 5.551 6.066-.25 6.066-5.551 6.066-5.551-6.078 1.416-12.129 0-12.129 0zm11.363 1.108s-.669 1.959-5.051 1.959c-3.505 0-5.388-1.164-5.607-1.959 0 0 5.912 1.055 10.658 0zM11.804 1.011C5.609 1.011.978 6.033.978 12.228s4.826 10.761 11.021 10.761S23.02 18.423 23.02 12.228c.001-6.195-5.021-11.217-11.216-11.217zM12 21.354c-5.273 0-9.381-3.886-9.381-9.159s3.942-9.548 9.215-9.548 9.548 4.275 9.548 9.548c-.001 5.272-4.109 9.159-9.382 9.159zm3.108-9.751c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962z">
+                                </path>
+                            </svg>
+                        </button>
+                        <button class="wa-icon-btn" title="Attach">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path fill="currentColor"
+                                    d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.646 3.974 1.646a5.58 5.58 0 0 0 3.972-1.646l8.846-8.844a4.611 4.611 0 0 0 1.647-3.977 4.597 4.597 0 0 0-1.647-3.977 4.613 4.613 0 0 0-3.975-1.646c-1.503 0-2.912.583-3.974 1.645L4.47 10.569a.498.498 0 0 0-.147.354c0 .133.054.261.147.354l.001.001a.5.5 0 0 0 .708 0l7.835-7.835c.801-.8 1.861-1.239 2.986-1.239 1.126 0 2.185.439 2.987 1.239a4.246 4.246 0 0 1 0 5.998l-8.845 8.844a4.577 4.577 0 0 1-3.266 1.354 4.58 4.58 0 0 1-3.265-1.354 4.609 4.609 0 0 1-1.354-3.268c0-1.226.478-2.378 1.353-3.268l8.362-8.36a.499.499 0 0 0 0-.707l-.001-.002a.498.498 0 0 0-.707 0l-8.363 8.361a5.61 5.61 0 0 0-1.646 3.977z">
+                                </path>
+                            </svg>
+                        </button>
+                        <div class="wa-input-container">
+                            <input type="text" class="wa-input" id="wa-input" placeholder="Type a message"
+                                autocomplete="off" />
+                        </div>
+                        <button class="wa-icon-btn" title="Voice Message" id="wa-mic-btn" onclick="sendMessage()">
+                            <svg viewBox="0 0 24 24" width="24" height="24" id="wa-mic-icon">
+                                <path fill="currentColor"
+                                    d="M11.999 14.942c2.001 0 3.531-1.53 3.531-3.531V4.35c0-2.001-1.53-3.531-3.531-3.531S8.469 2.35 8.469 4.35v7.061c0 2.001 1.53 3.531 3.53 3.531zm4.338-3.531a.5.5 0 0 1 .5.5c0 2.597-2.107 4.711-4.704 4.711-2.595 0-4.703-2.114-4.703-4.711a.5.5 0 0 1 .5-.5.5.5 0 0 1 .5.5c0 2.036 1.666 3.711 3.703 3.711 2.037 0 3.704-1.675 3.704-3.711a.5.5 0 0 1 .5-.5zm-4.838 6.417c0 .276-.224.5-.5.5s-.5-.224-.5-.5v-1.159c1.076-.118 2.062-.519 2.87-1.115a.5.5 0 0 1 .586.808c-.974.708-2.161 1.157-3.456 1.258v.208z">
+                                </path>
+                            </svg>
+                            <svg viewBox="0 0 24 24" width="24" height="24" id="wa-send-icon" style="display:none">
+                                <path fill="currentColor"
+                                    d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.239 1.816-13.239 1.817-.011 7.912z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====================== -->
+        <!-- TELEMETRY TAB -->
+        <!-- ====================== -->
+        <section id="tab-telemetry" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-value" id="tel-total">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Latency</div>
+                    <div class="stat-value" id="tel-avg-lat">0<span style="font-size:0.9rem">ms</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Min Latency</div>
+                    <div class="stat-value" id="tel-min-lat">0<span style="font-size:0.9rem">ms</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Max Latency</div>
+                    <div class="stat-value" id="tel-max-lat">0<span style="font-size:0.9rem">ms</span></div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span class="icon">📈</span> Recent Activity</div>
+                    <div class="card-title"><span class="icon">📊</span> Latency Distribution</div>
+                    <button class="card-action" onclick="loadTelemetry()">Refresh</button>
                 </div>
-                <div id="ov-activity">
+                <div id="tel-latency-chart"
+                    style="display:flex;align-items:flex-end;gap:3px;height:150px;padding:1rem 0"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🔧</span> Structural Telemetry</div>
+                </div>
+                <div id="tel-structural" class="json-view">Loading structural telemetry...</div>
+            </div>
+        </section>
+
+        <!-- ====================== -->
+        <!-- ANALYSIS TAB -->
+        <!-- ====================== -->
+        <section id="tab-analysis" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🔬</span> Structural Analysis</div>
+                    <button class="card-action" id="analysis-btn" onclick="runAnalysis()">Run Analysis</button>
+                </div>
+                <div id="analysis-result">
                     <div class="empty-state">
-                        <div class="icon">📭</div>
-                        <p>No activity yet. Send an inference request to begin.</p>
+                        <div class="icon">🔬</div>
+                        <p>Click "Run Analysis" to analyze model structure based on telemetry data.</p>
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="icon">🏥</span> System Health</div>
-                </div>
-                <div id="ov-health">
-                    <div class="progress-bar-container">
-                        <div class="progress-label"><span>System Status</span><span id="ov-status-text">Healthy</span></div>
-                        <div class="progress-bar"><div class="progress-fill success" style="width:100%"></div></div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">✂️</span> Prunable Blocks</div>
                     </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-label"><span>Uptime</span><span id="ov-uptime-text">0s</span></div>
-                        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
-                    </div>
-                    <div style="margin-top:1rem;font-size:0.8rem;color:var(--text-muted)">
-                        <p>Latency range: <span id="ov-lat-range">N/A</span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ====================== -->
-    <!-- INFERENCE TAB -->
-    <!-- ====================== -->
-    <section id="tab-inference" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">💬</span> Model Inference</div>
-            </div>
-            <div class="inference-box">
-                <input type="text" class="inference-input" id="infer-input"
-                       placeholder="Enter your prompt... e.g. 'Explain quantum computing'" />
-                <button class="btn-primary" id="infer-btn" onclick="runInference()">
-                    Generate
-                </button>
-            </div>
-            <div class="response-box" id="infer-response">
-                Response will appear here...
-            </div>
-            <div class="response-meta" id="infer-meta" style="display:none">
-                <span>⏱ <span id="infer-latency">-</span></span>
-                <span>🆔 <span id="infer-id">-</span></span>
-                <span>🌊 Drift: <span id="infer-drift">-</span></span>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">📜</span> Recent Requests</div>
-                <button class="card-action" onclick="loadTelemetry()">Refresh</button>
-            </div>
-            <div style="overflow-x:auto">
-                <table class="data-table" id="infer-history-table">
-                    <thead>
-                        <tr>
-                            <th>Request ID</th>
-                            <th>Input Tokens</th>
-                            <th>Output Tokens</th>
-                            <th>Latency (ms)</th>
-                            <th>Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="infer-history-body"></tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <!-- ====================== -->
-    <!-- TELEMETRY TAB -->
-    <!-- ====================== -->
-    <section id="tab-telemetry" class="tab-content">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Requests</div>
-                <div class="stat-value" id="tel-total">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Avg Latency</div>
-                <div class="stat-value" id="tel-avg-lat">0<span style="font-size:0.9rem">ms</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Min Latency</div>
-                <div class="stat-value" id="tel-min-lat">0<span style="font-size:0.9rem">ms</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Max Latency</div>
-                <div class="stat-value" id="tel-max-lat">0<span style="font-size:0.9rem">ms</span></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">📊</span> Latency Distribution</div>
-                <button class="card-action" onclick="loadTelemetry()">Refresh</button>
-            </div>
-            <div id="tel-latency-chart" style="display:flex;align-items:flex-end;gap:3px;height:150px;padding:1rem 0"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">🔧</span> Structural Telemetry</div>
-            </div>
-            <div id="tel-structural" class="json-view">Loading structural telemetry...</div>
-        </div>
-    </section>
-
-    <!-- ====================== -->
-    <!-- ANALYSIS TAB -->
-    <!-- ====================== -->
-    <section id="tab-analysis" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">🔬</span> Structural Analysis</div>
-                <button class="card-action" id="analysis-btn" onclick="runAnalysis()">Run Analysis</button>
-            </div>
-            <div id="analysis-result">
-                <div class="empty-state">
-                    <div class="icon">🔬</div>
-                    <p>Click "Run Analysis" to analyze model structure based on telemetry data.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid-2">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="icon">✂️</span> Prunable Blocks</div>
-                </div>
-                <div id="analysis-prunable">
-                    <div class="empty-state"><p>Run analysis first</p></div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="icon">💡</span> Recommendations</div>
-                </div>
-                <div id="analysis-recs">
-                    <div class="empty-state"><p>Run analysis first</p></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ====================== -->
-    <!-- EVOLUTION TAB -->
-    <!-- ====================== -->
-    <section id="tab-evolution" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">🧬</span> Evolution Engine</div>
-                <button class="btn-primary" id="evolve-btn" onclick="triggerEvolution()">
-                    🚀 Trigger Evolution
-                </button>
-            </div>
-            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem">
-                Manually trigger an evolution cycle: collect telemetry → generate candidates → recompile → validate → deploy.
-            </p>
-            <div id="evolution-status"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">📜</span> Evolution History</div>
-            </div>
-            <div id="evolution-history">
-                <div class="empty-state">
-                    <div class="icon">🧬</div>
-                    <p>No evolution cycles recorded yet.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">📊</span> Profiling Report</div>
-                <button class="card-action" onclick="runProfiler()">Generate Report</button>
-            </div>
-            <div id="profiler-result" class="json-view">Click "Generate Report" to create usage profiling report.</div>
-        </div>
-    </section>
-
-    <!-- ====================== -->
-    <!-- REGISTRY TAB -->
-    <!-- ====================== -->
-    <section id="tab-registry" class="tab-content">
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title"><span class="icon">📋</span> Model Registry</div>
-                <button class="card-action" onclick="loadRegistry()">Refresh</button>
-            </div>
-            <div id="registry-summary" style="margin-bottom:1rem"></div>
-            <div style="overflow-x:auto">
-                <table class="data-table" id="registry-table">
-                    <thead>
-                        <tr>
-                            <th>Version</th>
-                            <th>Parent</th>
-                            <th>Optimization</th>
-                            <th>Compression</th>
-                            <th>Accuracy Drop</th>
-                            <th>Validation</th>
-                            <th>Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="registry-body"></tbody>
-                </table>
-            </div>
-            <div id="registry-empty" class="empty-state">
-                <div class="icon">📋</div>
-                <p>No models registered yet. Trigger an evolution to create optimized versions.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ====================== -->
-    <!-- DRIFT TAB -->
-    <!-- ====================== -->
-    <section id="tab-drift" class="tab-content">
-        <div class="grid-2">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="icon">🌊</span> Drift Detection</div>
-                    <button class="card-action" onclick="loadDrift()">Refresh</button>
-                </div>
-                <div class="drift-score-display">
-                    <div class="drift-circle low" id="drift-circle">
-                        <div class="drift-value" id="drift-current-score">0.00</div>
-                        <div class="drift-label">Drift Score</div>
-                    </div>
-                    <div style="display:flex;justify-content:center;gap:2rem;margin-top:1rem">
-                        <div>
-                            <div style="font-size:0.7rem;color:var(--text-muted)">MEMORY SIZE</div>
-                            <div style="font-size:1.1rem;font-weight:600" id="drift-mem-size">0</div>
+                    <div id="analysis-prunable">
+                        <div class="empty-state">
+                            <p>Run analysis first</p>
                         </div>
-                        <div>
-                            <div style="font-size:0.7rem;color:var(--text-muted)">DRIFT EVENTS</div>
-                            <div style="font-size:1.1rem;font-weight:600" id="drift-events-count">0</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">💡</span> Recommendations</div>
+                    </div>
+                    <div id="analysis-recs">
+                        <div class="empty-state">
+                            <p>Run analysis first</p>
                         </div>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- ====================== -->
+        <!-- EVOLUTION TAB -->
+        <!-- ====================== -->
+        <section id="tab-evolution" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title"><span class="icon">📉</span> Drift History</div>
+                    <div class="card-title"><span class="icon">🧬</span> Evolution Engine</div>
+                    <button class="btn-primary" id="evolve-btn" onclick="triggerEvolution()">
+                        🚀 Trigger Evolution
+                    </button>
                 </div>
-                <div id="drift-chart" style="display:flex;align-items:flex-end;gap:3px;height:120px;padding:0.5rem 0"></div>
-                <div style="overflow-x:auto;margin-top:1rem">
-                    <table class="data-table">
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem">
+                    Manually trigger an evolution cycle: collect telemetry → generate candidates → recompile → validate
+                    → deploy.
+                </p>
+                <div id="evolution-status"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📜</span> Evolution History</div>
+                </div>
+                <div id="evolution-history">
+                    <div class="empty-state">
+                        <div class="icon">🧬</div>
+                        <p>No evolution cycles recorded yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📊</span> Profiling Report</div>
+                    <button class="card-action" onclick="runProfiler()">Generate Report</button>
+                </div>
+                <div id="profiler-result" class="json-view">Click "Generate Report" to create usage profiling report.
+                </div>
+            </div>
+        </section>
+
+        <!-- ====================== -->
+        <!-- REGISTRY TAB -->
+        <!-- ====================== -->
+        <section id="tab-registry" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📋</span> Model Registry</div>
+                    <button class="card-action" onclick="loadRegistry()">Refresh</button>
+                </div>
+                <div id="registry-summary" style="margin-bottom:1rem"></div>
+                <div style="overflow-x:auto">
+                    <table class="data-table" id="registry-table">
                         <thead>
                             <tr>
-                                <th>Score</th>
-                                <th>Flag</th>
-                                <th>Embedding</th>
-                                <th>Vocab</th>
+                                <th>Version</th>
+                                <th>Parent</th>
+                                <th>Optimization</th>
+                                <th>Compression</th>
+                                <th>Accuracy Drop</th>
+                                <th>Validation</th>
                                 <th>Timestamp</th>
                             </tr>
                         </thead>
-                        <tbody id="drift-history-body"></tbody>
+                        <tbody id="registry-body"></tbody>
                     </table>
                 </div>
+                <div id="registry-empty" class="empty-state">
+                    <div class="icon">📋</div>
+                    <p>No models registered yet. Trigger an evolution to create optimized versions.</p>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ====================== -->
-    <!-- GOVERNANCE TAB -->
-    <!-- ====================== -->
-    <section id="tab-governance" class="tab-content">
-        <div class="grid-2">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="icon">🛡️</span> Governance Controls</div>
+        <!-- ====================== -->
+        <!-- DRIFT TAB -->
+        <!-- ====================== -->
+        <section id="tab-drift" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">🌊</span> Drift Detection</div>
+                        <button class="card-action" onclick="loadDrift()">Refresh</button>
+                    </div>
+                    <div class="drift-score-display">
+                        <div class="drift-circle low" id="drift-circle">
+                            <div class="drift-value" id="drift-current-score">0.00</div>
+                            <div class="drift-label">Drift Score</div>
+                        </div>
+                        <div style="display:flex;justify-content:center;gap:2rem;margin-top:1rem">
+                            <div>
+                                <div style="font-size:0.7rem;color:var(--text-muted)">MEMORY SIZE</div>
+                                <div style="font-size:1.1rem;font-weight:600" id="drift-mem-size">0</div>
+                            </div>
+                            <div>
+                                <div style="font-size:0.7rem;color:var(--text-muted)">DRIFT EVENTS</div>
+                                <div style="font-size:1.1rem;font-weight:600" id="drift-events-count">0</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="gov-summary" style="margin-bottom:1.25rem"></div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap">
-                    <button class="btn-danger" onclick="performRollback()">
-                        ⏪ Rollback to Backup
-                    </button>
-                    <button class="card-action" onclick="loadGovernance()">
-                        🔄 Refresh
-                    </button>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><span class="icon">📜</span> Audit Trail</div>
-                </div>
-                <div id="gov-audit">
-                    <div class="empty-state">
-                        <div class="icon">📜</div>
-                        <p>No audit events recorded yet.</p>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">📉</span> Drift History</div>
+                    </div>
+                    <div id="drift-chart"
+                        style="display:flex;align-items:flex-end;gap:3px;height:120px;padding:0.5rem 0"></div>
+                    <div style="overflow-x:auto;margin-top:1rem">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Score</th>
+                                    <th>Flag</th>
+                                    <th>Embedding</th>
+                                    <th>Vocab</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="drift-history-body"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
 
-<!-- Toast Container -->
-<div class="toast-container" id="toast-container"></div>
+        <!-- ====================== -->
+        <!-- GOVERNANCE TAB -->
+        <!-- ====================== -->
+        <section id="tab-governance" class="tab-content">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">🛡️</span> Governance Controls</div>
+                    </div>
+                    <div id="gov-summary" style="margin-bottom:1.25rem"></div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                        <button class="btn-danger" onclick="performRollback()">
+                            ⏪ Rollback to Backup
+                        </button>
+                        <button class="card-action" onclick="loadGovernance()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span class="icon">📜</span> Audit Trail</div>
+                    </div>
+                    <div id="gov-audit">
+                        <div class="empty-state">
+                            <div class="icon">📜</div>
+                            <p>No audit events recorded yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-<script src="/static/app.js"></script>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/app.js"></script>
 </body>
+
 </html>

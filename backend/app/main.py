@@ -139,6 +139,32 @@ if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 
+@app.on_event("startup")
+def startup_event():
+    """Warm-up components on startup."""
+    print("🚀 Starting Krishitantra SE-SLM...")
+    
+    # 1. Warm-up drift detector with recent request text
+    try:
+        # We need a way to get text, but telemetry_requests doesn't store text (only metrics).
+        # However, drift_history *does* store input_text.
+        # Let's use drift_history to warm up the vectorizer.
+        history = get_drift_history(limit=20)
+        texts = [h["input_text"] for h in history if h.get("input_text")]
+        
+        # Also check if we should fetch from a different source if drift history is empty?
+        # For now, drift history is the best source of "past inputs".
+        from backend.app.drift_detector import initialize_memory
+        if texts:
+            initialize_memory(texts)
+            print(f"✅ Loaded {len(texts)} historical inputs for drift detection")
+        else:
+            print("ℹ️ No history found for drift warm-up")
+            
+    except Exception as e:
+        print(f"⚠️ Startup warm-up failed: {e}")
+
+
 # ======================================================
 # Evolution Control (Stability Layer)
 # ======================================================
@@ -209,7 +235,7 @@ def health():
         "model_version": model_manager.current_version,
         "uptime_seconds": round(time.time() - START_TIME, 2),
         "total_requests": summary.get("total_requests", 0),
-        "model_name": "google/flan-t5-small"
+        "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0 (Q4_K_M GGUF)"
     }
 
 
@@ -401,6 +427,13 @@ def trigger_evolution_manual(request: EvolutionRequest = None):
                 "error": str(e)
             }
         }
+
+
+@app.get("/evolution-history")
+def get_evolution_history(limit: int = 50):
+    return {
+        "entries": get_evolution_audit_log(limit)
+    }
 
 
 # ======================================================

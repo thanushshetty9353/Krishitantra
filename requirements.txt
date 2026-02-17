@@ -1,7 +1,5 @@
 fastapi
 uvicorn
-transformers
-torch
 pydantic
 scikit-learn
 numpy
@@ -10,3 +8,5 @@ opentelemetry-api
 opentelemetry-sdk
 opentelemetry-instrumentation-fastapi
 PyPDF2
+llama-cpp-python
+huggingface_hub

@@ -64,23 +64,23 @@ def _parse_pruning_plan(best_candidate, report):
         optimization_type = "head_pruning"
 
     # Parse block names to extract layer indices for head/layer pruning
-    # Block names look like: "ffn_sparsity", "encoder.block.X", etc.
-    encoder_layer_indices = set()
+    # Block names look like: "model.layers.X.self_attn", "model.layers.X.mlp", etc.
+    layer_indices = set()
     for block_name in prune_blocks:
-        # Try to extract encoder block indices
-        match = re.search(r'encoder\.block\.(\d+)', block_name)
+        # Try to extract layer indices (TinyLlama pattern)
+        match = re.search(r'model\.layers\.(\d+)', block_name)
         if match:
-            encoder_layer_indices.add(int(match.group(1)))
+            layer_indices.add(int(match.group(1)))
 
-    if encoder_layer_indices:
+    if layer_indices:
         # Use extracted layer indices for pruning
-        sorted_indices = sorted(encoder_layer_indices)
+        sorted_indices = sorted(layer_indices)
         if optimization_type in ("layer_pruning", "all"):
             layers_to_remove = sorted_indices
         # For head pruning, prune last head from identified layers
-        heads_to_prune = {idx: [7] for idx in sorted_indices}
+        heads_to_prune = {idx: [31] for idx in sorted_indices}
     else:
-        # Default: prune from last encoder layers
+        # Default: prune from last layers
         heads_to_prune = None  # recompiler will use defaults
         layers_to_remove = None
 
