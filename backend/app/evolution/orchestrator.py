@@ -32,7 +32,7 @@ from .model_registry import register_model
 from .rollback import backup_model, rollback_model
 from .distillation import distill
 
-PHASE3_REPORT = Path("phase2_usage_report.json")
+USAGE_STRUCTURAL_REPORT = Path("usage_and_structural_report.json")
 
 
 def _parse_pruning_plan(best_candidate, report):
@@ -101,11 +101,11 @@ def run_evolution_cycle():
     """
 
     # --- Step 1: Read usage report ---
-    if not PHASE3_REPORT.exists():
+    if not USAGE_STRUCTURAL_REPORT.exists():
         return {"status": "SKIPPED", "reason": "Usage report not found. Run /profiler/run first."}
 
     try:
-        with open(PHASE3_REPORT) as f:
+        with open(USAGE_STRUCTURAL_REPORT) as f:
             report = json.load(f)
     except (json.JSONDecodeError, Exception) as e:
         return {"status": "ERROR", "reason": f"Failed to read usage report: {e}"}

@@ -348,7 +348,7 @@ def run_profiler():
 
 @app.get("/profiler/report")
 def get_profiler_report():
-    report_path = Path("phase2_usage_report.json")
+    report_path = Path("usage_and_structural_report.json")
     if not report_path.exists():
         return {"status": "NOT_FOUND", "message": "Run /profiler/run first"}
 

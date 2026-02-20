@@ -1,0 +1,152 @@
+[
+  {
+    "timestamp": "2026-02-20T06:36:41.545683",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "default_pruning"
+          ]
+        },
+        "latency_gain_ms": 15,
+        "memory_gain_mb": 5,
+        "projected_latency_improvement": "2.5%",
+        "risk": 0.0,
+        "score": 14.5
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "default_pruning"
+        ]
+      },
+      "latency_gain_ms": 15,
+      "memory_gain_mb": 5,
+      "projected_latency_improvement": "2.5%",
+      "risk": 0.0,
+      "score": 14.5
+    }
+  },
+  {
+    "timestamp": "2026-02-20T06:40:09.999295",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "default_pruning"
+          ]
+        },
+        "latency_gain_ms": 15,
+        "memory_gain_mb": 5,
+        "projected_latency_improvement": "2.5%",
+        "risk": 0.0,
+        "score": 14.5
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "default_pruning"
+        ]
+      },
+      "latency_gain_ms": 15,
+      "memory_gain_mb": 5,
+      "projected_latency_improvement": "2.5%",
+      "risk": 0.0,
+      "score": 14.5
+    }
+  },
+  {
+    "timestamp": "2026-02-20T07:51:50.990154",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "default_pruning"
+          ]
+        },
+        "latency_gain_ms": 15,
+        "memory_gain_mb": 5,
+        "projected_latency_improvement": "2.5%",
+        "risk": 0.0,
+        "score": 14.5
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "default_pruning"
+        ]
+      },
+      "latency_gain_ms": 15,
+      "memory_gain_mb": 5,
+      "projected_latency_improvement": "2.5%",
+      "risk": 0.0,
+      "score": 14.5
+    }
+  },
+  {
+    "timestamp": "2026-02-20T08:03:40.918423",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "default_pruning"
+          ]
+        },
+        "latency_gain_ms": 15,
+        "memory_gain_mb": 5,
+        "projected_latency_improvement": "2.5%",
+        "risk": 0.0,
+        "score": 14.5
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "default_pruning"
+        ]
+      },
+      "latency_gain_ms": 15,
+      "memory_gain_mb": 5,
+      "projected_latency_improvement": "2.5%",
+      "risk": 0.0,
+      "score": 14.5
+    }
+  },
+  {
+    "timestamp": "2026-02-20T08:05:45.966944",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "default_pruning"
+          ]
+        },
+        "latency_gain_ms": 15,
+        "memory_gain_mb": 5,
+        "projected_latency_improvement": "2.5%",
+        "risk": 0.0,
+        "score": 14.5
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "default_pruning"
+        ]
+      },
+      "latency_gain_ms": 15,
+      "memory_gain_mb": 5,
+      "projected_latency_improvement": "2.5%",
+      "risk": 0.0,
+      "score": 14.5
+    }
+  }
+]

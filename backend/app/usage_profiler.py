@@ -31,7 +31,7 @@ from backend.app.database import (
 # ==========================
 
 BASE_DIR = Path(__file__).resolve().parent           # backend/app
-OUTPUT_PATH = BASE_DIR.parent.parent / "phase2_usage_report.json"
+OUTPUT_PATH = BASE_DIR.parent.parent / "usage_and_structural_report.json"
 
 # ==========================
 # Configuration
@@ -123,17 +123,17 @@ def analyze_token_frequencies(token_freq: dict, top_n: int = 20):
 
 def generate_usage_and_structure_report():
     """
-    Phase 2 (Usage Profiling) + Phase 3 (Structural Analysis)
+    Usage Profiling + Structural Analysis
     Reads from the correct telemetry_structural table.
     """
-    print("\n🚀 Running Phase 2 (Usage Profiling) + Phase 3 (Structural Analysis)\n")
+    print("\n🚀 Running Usage Profiling + Structural Analysis\n")
 
     # -------- Read aggregated telemetry from DB --------
     head_stats = get_aggregated_head_stats()
     ffn_sparsity = get_aggregated_ffn_stats()
     telemetry_summary = get_telemetry_summary()
 
-    # -------- Phase 2: Usage Profiling --------
+    # -------- Usage Profiling --------
 
     # Flatten head stats for importance scoring
     flat_head_usage = {}
@@ -151,7 +151,7 @@ def generate_usage_and_structure_report():
     dormant_heads = find_dormant(head_importance)
     dormant_ffn = find_dormant(ffn_importance)
 
-    # -------- Phase 3: Structural Analysis (full) --------
+    # -------- Structural Analysis (full) --------
     analysis_result = run_full_analysis(head_stats, ffn_sparsity)
 
     # -------- Construct Report --------

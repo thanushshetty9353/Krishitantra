@@ -1,0 +1,10 @@
+{
+  "status": "FAIL",
+  "similarity_score": 1.0,
+  "accuracy_drop_percent": 0.0,
+  "hallucination_rate": 0.0,
+  "base_latency_ms": 2128.83,
+  "optimized_latency_ms": 1990.64,
+  "latency_improvement_percent": 6.49,
+  "avg_latency_ms": 1990.64
+}

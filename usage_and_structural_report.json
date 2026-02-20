@@ -1,0 +1,49 @@
+{
+  "telemetry_summary": {
+    "total_requests": 0,
+    "avg_latency_ms": null,
+    "min_latency_ms": null,
+    "max_latency_ms": null,
+    "total_input_tokens": null,
+    "total_output_tokens": null
+  },
+  "importance_scores": {
+    "fine_grained": {
+      "attention_heads": {},
+      "ffn_layers": {}
+    },
+    "block_level": {
+      "attention_heads": {},
+      "ffn_layers": {}
+    }
+  },
+  "dormant_components": {
+    "attention_heads": [],
+    "ffn_layers": [],
+    "total_dormant": 0
+  },
+  "structural_decisions": {
+    "prune_attention_blocks": [],
+    "risk_score": 0.0,
+    "redundant_ffn_layers": [],
+    "rewiring_recommendations": [
+      {
+        "type": "quantization",
+        "description": "Apply INT8 dynamic quantization to all Linear layers",
+        "estimated_memory_saving": "30-50%",
+        "estimated_speedup": "10-20%"
+      }
+    ],
+    "constraints_enforced": {
+      "max_prune_ratio": 0.4,
+      "protected_blocks": [
+        "embedding",
+        "classifier",
+        "safety",
+        "shared",
+        "output"
+      ],
+      "prune_threshold": 0.15
+    }
+  }
+}
