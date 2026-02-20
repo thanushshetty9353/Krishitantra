@@ -18,7 +18,7 @@ A full-featured Self-Evolving Small Language Model system that monitors, profile
 │  Evolution  │   Drift   │   Governance      │
 │  Engine     │ Detector  │   Manager         │
 ├─────────────┴───────────┴───────────────────┤
-│        Model (google/flan-t5-small)         │
+│    Model (TinyLlama-1.1B-Chat-v1.0 GGUF)    │
 └─────────────────────────────────────────────┘
 ```
 
@@ -26,8 +26,8 @@ A full-featured Self-Evolving Small Language Model system that monitors, profile
 
 - **Language**: Python 3.10+
 - **Framework**: FastAPI + Uvicorn
-- **AI/ML**: PyTorch, Hugging Face Transformers
-- **Model**: google/flan-t5-small (Seq2Seq)
+- **AI/ML**: llama-cpp-python, GGUF Quantization
+- **Model**: TinyLlama-1.1B-Chat-v1.0 (Q4_K_M GGUF)
 - **Telemetry**: OpenTelemetry, Prometheus
 - **Database**: SQLite
 - **Frontend**: HTML/CSS/JavaScript (Dark-themed dashboard)
@@ -57,11 +57,14 @@ Open **http://localhost:8000** to access the dashboard.
 | `/profiler/report` | GET | View profiling report |
 | `/analysis` | GET | Structural analysis |
 | `/evolve` | POST | Trigger evolution cycle |
+| `/evolution-history` | GET | View evolution audit logs |
 | `/registry` | GET | Model registry |
 | `/registry/{version}` | GET | Specific model version |
 | `/drift` | GET | Drift detection status |
 | `/governance/audit` | GET | Audit trail |
 | `/governance/rollback` | POST | Rollback model |
+| `/governance/approve/{version}` | POST | Approve evolution version |
+| `/governance/reject/{version}` | POST | Reject evolution version |
 | `/metrics` | GET | Prometheus metrics |
 
 ## System Components
