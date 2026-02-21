@@ -3,8 +3,8 @@
   "similarity_score": 1.0,
   "accuracy_drop_percent": 0.0,
   "hallucination_rate": 0.0,
-  "base_latency_ms": 1777.83,
-  "optimized_latency_ms": 1767.4,
-  "latency_improvement_percent": 0.59,
-  "avg_latency_ms": 1767.4
+  "base_latency_ms": 1704.22,
+  "optimized_latency_ms": 1607.38,
+  "latency_improvement_percent": 5.68,
+  "avg_latency_ms": 1607.38
 }

@@ -179,6 +179,7 @@ def trigger_evolution():
     """
     Safe evolution trigger with cooldown + thread lock.
     Prevents infinite recompile loops.
+    Automatically switches to the new model if evolution is APPROVED.
     """
     global LAST_EVOLUTION_TIME
 
@@ -205,6 +206,20 @@ def trigger_evolution():
             if isinstance(result, dict) else "UNKNOWN",
         triggered_by="drift_detection"
     )
+
+    # Auto-switch: load the improved model if evolution was approved
+    if isinstance(result, dict) and result.get("evolution_status") == "APPROVED":
+        new_version = result.get("new_version", "unknown")
+        print(f"✅ Evolution APPROVED → Switching to model {new_version}")
+        model_manager.load_latest_optimized()
+        ACTIVE_MODEL_VERSION.labels(
+            version=model_manager.current_version
+        ).set(1)
+        print(f"🔄 Active model is now: {model_manager.current_version}")
+    elif isinstance(result, dict) and result.get("evolution_status") == "REJECTED":
+        print("⚠️ Evolution REJECTED → Keeping current model")
+    else:
+        print("❌ Evolution failed → Keeping current model")
 
 
 # ======================================================
