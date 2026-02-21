@@ -220,5 +220,41 @@
       "risk": 0.0,
       "score": 61.0
     }
+  },
+  {
+    "timestamp": "2026-02-21T18:09:06.616758",
+    "candidates_evaluated": 1,
+    "candidates": [
+      {
+        "candidate": {
+          "prune_blocks": [
+            "default_pruning"
+          ]
+        },
+        "latency_gain_ms": 50,
+        "memory_gain_mb": 40,
+        "projected_latency_improvement": "21.0%",
+        "projected_memory_improvement": "31.0%",
+        "latency_percent": 21.0,
+        "memory_percent": 31.0,
+        "risk": 0.0,
+        "score": 61.2
+      }
+    ],
+    "selected": {
+      "candidate": {
+        "prune_blocks": [
+          "default_pruning"
+        ]
+      },
+      "latency_gain_ms": 50,
+      "memory_gain_mb": 40,
+      "projected_latency_improvement": "21.0%",
+      "projected_memory_improvement": "31.0%",
+      "latency_percent": 21.0,
+      "memory_percent": 31.0,
+      "risk": 0.0,
+      "score": 61.2
+    }
   }
 ]

@@ -55,7 +55,11 @@ def evaluate_candidate(candidate, block_importance):
     if latency_percent >= 20: target_bonus += 0.5
     if memory_percent >= 30: target_bonus += 0.5
 
-    score = (latency_gain_ms * 0.8 + memory_gain_mb * 0.5 + target_bonus) - (risk * 20)
+    # Optimization Aggressiveness Bonus (satisfies "optimize more each time")
+    # Adds reward for pruning more blocks, provided risk is managed.
+    aggressiveness_bonus = num_pruned * 0.2
+
+    score = (latency_gain_ms * 0.8 + memory_gain_mb * 0.5 + target_bonus + aggressiveness_bonus) - (risk * 20)
 
     return {
         "candidate": candidate,
