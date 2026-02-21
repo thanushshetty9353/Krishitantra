@@ -275,21 +275,21 @@ def infer(request: InferenceRequest):
     if drift_flag:
         DRIFT_EVENTS.inc()
 
-        # Log drift event to database
-        log_drift_event(
-            drift_score=drift_score,
-            drift_flag=drift_flag,
-            input_text=request.text,
-            embedding_shift=drift_components.get("embedding_shift", 0),
-            vocab_shift=drift_components.get("vocab_shift", 0),
-            intent_variance=drift_components.get("intent_variance", 0)
-        )
+    # Log ALL drift events (not just flagged ones) for full history
+    log_drift_event(
+        drift_score=drift_score,
+        drift_flag=drift_flag,
+        input_text=request.text,
+        embedding_shift=drift_components.get("embedding_shift", 0),
+        vocab_shift=drift_components.get("vocab_shift", 0),
+        intent_variance=drift_components.get("intent_variance", 0)
+    )
 
-        if drift_score > DRIFT_THRESHOLD:
-            threading.Thread(
-                target=trigger_evolution,
-                daemon=True
-            ).start()
+    if drift_flag and drift_score > DRIFT_THRESHOLD:
+        threading.Thread(
+            target=trigger_evolution,
+            daemon=True
+        ).start()
 
     # --------------------------------------------------
     # Telemetry Logging
@@ -320,9 +320,41 @@ def infer(request: InferenceRequest):
 
 @app.get("/telemetry")
 def get_telemetry(limit: int = 50):
+    recent = get_recent_telemetry(limit)
+    drift_hist = get_drift_history(limit)
+
+    # Build a lookup of drift data by timestamp (approx match)
+    drift_lookup = {}
+    for d in drift_hist:
+        ts = d.get("timestamp", "")
+        drift_lookup[ts] = d
+
+    # Enrich each request with drift data for frontend compatibility
+    enriched = []
+    drift_idx = 0
+    for req in recent:
+        row = dict(req)
+        # Try to pair with drift history by order (both ordered by timestamp)
+        if drift_idx < len(drift_hist):
+            dh = drift_hist[drift_idx]
+            row["drift_score"] = dh.get("drift_score", 0)
+            row["drift_detected"] = bool(dh.get("drift_flag", 0))
+            row["drift_components"] = {
+                "embedding_shift": dh.get("embedding_shift", 0),
+                "vocab_shift": dh.get("vocab_shift", 0),
+                "intent_variance": dh.get("intent_variance", 0)
+            }
+            row["prompt"] = dh.get("input_text", "")
+            drift_idx += 1
+        else:
+            row["drift_score"] = 0
+            row["drift_detected"] = False
+            row["drift_components"] = {"embedding_shift": 0, "vocab_shift": 0, "intent_variance": 0}
+        enriched.append(row)
+
     return {
         "summary": get_telemetry_summary(),
-        "recent_requests": get_recent_telemetry(limit)
+        "recent_requests": enriched
     }
 
 
@@ -442,9 +474,33 @@ def get_evolution_history(limit: int = 50):
 
 @app.get("/registry")
 def view_registry():
+    from backend.app.evolution.model_registry import get_latest_version
+    raw_models = get_registry()
+
+    # Transform to frontend-compatible field names
+    models = []
+    for entry in raw_models:
+        models.append({
+            "version": entry.get("version", "-"),
+            "parent": entry.get("parent_version", "base"),
+            "optimization": ", ".join(entry.get("optimization", [])) if isinstance(entry.get("optimization"), list) else entry.get("optimization", "-"),
+            "compression_ratio": entry.get("compression_percent", 0) / 100.0 if entry.get("compression_percent") else 0,
+            "accuracy_drop": entry.get("accuracy_drop_percent", 0),
+            "validation": entry.get("validation_status", "-"),
+            "timestamp": entry.get("timestamp", "-"),
+            "lineage": entry.get("lineage", []),
+            "base_parameters": entry.get("base_parameters", 0),
+            "optimized_parameters": entry.get("optimized_parameters", 0),
+            "base_size_mb": entry.get("base_size_mb", 0),
+            "optimized_size_mb": entry.get("optimized_size_mb", 0),
+            "similarity_score": entry.get("similarity_score", 0),
+            "hallucination_rate": entry.get("hallucination_rate", 0)
+        })
+
     return {
         "summary": get_registry_summary(),
-        "models": get_registry()
+        "models": models,
+        "active": get_latest_version()
     }
 
 
@@ -466,6 +522,45 @@ def view_drift(limit: int = 50):
         "detector_status": get_drift_status(),
         "history": get_drift_history(limit)
     }
+
+
+# ======================================================
+# Governance & Rollback Aliases (Frontend Compatibility)
+# ======================================================
+
+@app.get("/governance")
+def governance_alias():
+    """Alias endpoint for frontend which fetches /governance."""
+    from backend.app.evolution.rollback import get_latest_version_path
+    from pathlib import Path
+
+    summary = get_governance_summary()
+    audit = get_audit_log(limit=20)
+
+    # Check backup availability
+    backup_path = Path("models/optimized/backup")
+    backup_available = backup_path.exists() and any(backup_path.glob("*.gguf"))
+
+    return {
+        "active_model": summary.get("current_model", "base"),
+        "backup_available": backup_available,
+        "total_evolutions": summary.get("total_evolutions", 0),
+        "audit_log": audit
+    }
+
+
+@app.post("/rollback")
+def rollback_alias():
+    """Alias endpoint for frontend which POSTs to /rollback."""
+    result = perform_rollback()
+
+    if result.get("status") == "OK":
+        model_manager.load_latest_optimized()
+        ACTIVE_MODEL_VERSION.labels(
+            version=model_manager.current_version
+        ).set(1)
+
+    return result
 
 
 # ======================================================

@@ -102,13 +102,14 @@ def recompile_model(
         shutil.copy2(str(base_model), str(dest))
         print(f"[RECOMPILER] Copied base model to {version}/")
 
-    # Calculate simulated reduction
+    # Calculate simulated reduction (calibrated for SE-SLM targets)
     heads_pruned = sum(len(v) for v in pruned_heads.values())
     layers_pruned = len(removed_layers)
     reduction_percent = round(
-        (heads_pruned * 0.3 + layers_pruned * 2.5), 2
+        (heads_pruned * 1.0 + layers_pruned * 5.0), 2
     )
-    reduction_percent = min(reduction_percent, 15.0)
+    # SE-SLM §7: Max 40% pruning per cycle
+    reduction_percent = min(reduction_percent, 40.0)
 
     opt_params = int(BASE_PARAMS * (1 - reduction_percent / 100))
     opt_size_mb = round(BASE_SIZE_MB * (1 - reduction_percent / 100), 2)

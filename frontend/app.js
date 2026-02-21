@@ -520,20 +520,25 @@ let driftHistory = [];
 
 async function loadDrift() {
     try {
-        const res = await fetch(API_BASE + '/telemetry');
+        // Use the dedicated /drift endpoint which returns drift_history from DB
+        const res = await fetch(API_BASE + '/drift');
         const data = await res.json();
-        if (!data || !data.recent_requests) return;
+        if (!data || !data.history) return;
 
-        const reqs = data.recent_requests.filter(r => r.drift_score !== undefined && r.drift_score !== null);
+        const reqs = data.history;
         driftHistory = reqs;
 
-        const events = reqs.filter(r => r.drift_detected);
+        const events = reqs.filter(r => r.drift_flag === 1 || r.drift_flag === true);
         setText('drift-events-count', events.length);
 
+        // Detector status
+        if (data.detector_status) {
+            setText('drift-mem-size', data.detector_status.memory_size || 0);
+        }
+
         if (reqs.length > 0) {
-            const latest = reqs[reqs.length - 1];
+            const latest = reqs[0]; // drift_history is DESC ordered
             setText('drift-current-score', (latest.drift_score || 0).toFixed(3));
-            setText('drift-mem-size', reqs.length);
 
             const circle = document.getElementById('drift-circle');
             if (circle) {
@@ -541,10 +546,10 @@ async function loadDrift() {
                 circle.className = 'drift-circle ' + (s > 0.5 ? 'high' : s > 0.25 ? 'medium' : 'low');
             }
 
-            // Drift chart
+            // Drift chart (show most recent first, but bars left-to-right = oldest-to-newest)
             const chart = document.getElementById('drift-chart');
             if (chart) {
-                const recent = reqs.slice(-25);
+                const recent = reqs.slice(0, 25).reverse();
                 chart.innerHTML = recent.map(r => {
                     const s = r.drift_score || 0;
                     const pct = Math.min(s * 200, 100);
@@ -556,12 +561,12 @@ async function loadDrift() {
             // History table
             const tbody = document.getElementById('drift-history-body');
             if (tbody) {
-                tbody.innerHTML = reqs.slice(-10).reverse().map(r =>
+                tbody.innerHTML = reqs.slice(0, 10).map(r =>
                     '<tr>' +
                     '<td>' + (r.drift_score || 0).toFixed(3) + '</td>' +
-                    '<td>' + (r.drift_detected ? '<span style="color:var(--warning)">\u26A0</span>' : '<span style="color:var(--success)">\u2713</span>') + '</td>' +
-                    '<td>' + ((r.drift_components || {}).embedding_shift || 0).toFixed(3) + '</td>' +
-                    '<td>' + ((r.drift_components || {}).vocab_shift || 0).toFixed(3) + '</td>' +
+                    '<td>' + ((r.drift_flag === 1 || r.drift_flag === true) ? '<span style="color:var(--warning)">\u26A0</span>' : '<span style="color:var(--success)">\u2713</span>') + '</td>' +
+                    '<td>' + (r.embedding_shift || 0).toFixed(3) + '</td>' +
+                    '<td>' + (r.vocab_shift || 0).toFixed(3) + '</td>' +
                     '<td style="font-size:.72rem;color:var(--text-muted)">' + (r.timestamp || '-') + '</td>' +
                     '</tr>'
                 ).join('');
