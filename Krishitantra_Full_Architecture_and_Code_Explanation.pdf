@@ -1,0 +1,911 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R] /Count 8 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 2807 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+(Krishitantra Repository - Full Architecture and Code Explanation) Tj
+T*
+() Tj
+T*
+(Purpose of this report) Tj
+T*
+(- Explain architecture and runtime flow.) Tj
+T*
+(- Explain every repository file and every function in source code files.) Tj
+T*
+(- Explain why each approach/tool is used, and why alternatives were not used.) Tj
+T*
+() Tj
+T*
+(1\) System architecture \(high level\)) Tj
+T*
+(- Frontend: static single-page dashboard in frontend/index.html + frontend/app.js +) Tj
+T*
+(frontend/styles.css.) Tj
+T*
+(- Backend: FastAPI app in backend/app/main.py exposing inference, telemetry, analysis, evolution,) Tj
+T*
+(registry, drift, governance, metrics.) Tj
+T*
+(- Model runtime: TinyLlama GGUF via llama-cpp-python in backend/app/model.py.) Tj
+T*
+(- Persistence: SQLite in backend/data/requests.db via backend/app/database.py.) Tj
+T*
+(- Evolution pipeline: backend/app/evolution/*.py.) Tj
+T*
+(- Governance and rollback: backend/app/governance.py + backend/app/evolution/rollback.py.) Tj
+T*
+() Tj
+T*
+(Why this architecture \(and not heavier alternatives\)) Tj
+T*
+(- FastAPI + static frontend is simple and fast for local/demo ops; not using React/Next avoids build) Tj
+T*
+(complexity and deployment overhead.) Tj
+T*
+(- GGUF + llama-cpp runs local quantized inference with low memory; not using full PyTorch runtime) Tj
+T*
+(avoids heavy GPU dependency.) Tj
+T*
+(- SQLite is enough for local telemetry/audit with low ops overhead; not PostgreSQL avoids) Tj
+T*
+(infrastructure burden.) Tj
+T*
+(- Evolution is simulated/metadata-driven for GGUF because GGUF binaries are not straightforward for) Tj
+T*
+(in-place structural retraining.) Tj
+T*
+() Tj
+T*
+(2\) End-to-end runtime flow) Tj
+T*
+(A\) Inference flow) Tj
+T*
+(1. User sends chat from frontend/app.js sendMessage\(\).) Tj
+T*
+(2. POST /infer in backend/app/main.py.) Tj
+T*
+(3. main.py calls model.generate_text\(\).) Tj
+T*
+(4. model.py generates response with llama_cpp and simulated telemetry.) Tj
+T*
+(5. drift_detector.detect_drift\(\) computes drift score.) Tj
+T*
+(6. database.py logs request, structural telemetry, drift event.) Tj
+T*
+(7. If drift threshold exceeded, background evolution trigger starts.) Tj
+T*
+(8. Response returned to UI with request_id, latency, drift info.) Tj
+T*
+() Tj
+T*
+(B\) Evolution flow) Tj
+T*
+(1. /evolve or auto-trigger calls run_evolution_cycle\(\) in orchestrator.py.) Tj
+T*
+(2. Reads usage_and_structural_report.json.) Tj
+T*
+(3. Generates candidate prune plans.) Tj
+T*
+(4. Scores candidates.) Tj
+T*
+(5. Backs up current optimized model.) Tj
+T*
+(6. Recompiles simulated optimized version \(new vN folder\).) Tj
+T*
+(7. Validates model \(similarity, factual checks, latency\).) Tj
+T*
+(8. PASS => register in model registry; FAIL => rollback.) Tj
+T*
+() Tj
+T*
+(3\) File-by-file details) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 1904 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+(Root files) Tj
+T*
+() Tj
+T*
+(README.md) Tj
+T*
+(- Project summary, architecture diagram, setup command, endpoint list.) Tj
+T*
+(Why used) Tj
+T*
+(- Quick onboarding file. Not replaced by wiki to keep repo self-contained.) Tj
+T*
+() Tj
+T*
+(requirements.txt) Tj
+T*
+(- Dependency list for backend and tooling.) Tj
+T*
+(Why used) Tj
+T*
+(- Standard pip-compatible dependency lock-lite. Not using poetry/conda keeps setup minimal.) Tj
+T*
+() Tj
+T*
+(read_pdf.py) Tj
+T*
+(Functions:) Tj
+T*
+(- extract_text\(pdf_path\): reads PDF pages with PyPDF2, writes extracted_pdf.txt.) Tj
+T*
+(- __main__ block: CLI argument handling.) Tj
+T*
+(Why used) Tj
+T*
+(- Utility to convert spec PDF to plain text quickly. Not using OCR libraries because PDF already) Tj
+T*
+(text-based.) Tj
+T*
+() Tj
+T*
+(SE-SLM.pdf) Tj
+T*
+(- Original requirements/specification document.) Tj
+T*
+(Why used) Tj
+T*
+(- Source of truth for functional and non-functional requirements.) Tj
+T*
+() Tj
+T*
+(extracted_pdf.txt) Tj
+T*
+(- Text output from read_pdf.py; mirrors spec content for easier grep/inspection.) Tj
+T*
+() Tj
+T*
+(usage_and_structural_report.json) Tj
+T*
+(- Generated profiler+analysis output used by evolution orchestrator.) Tj
+T*
+() Tj
+T*
+(validation_report.json) Tj
+T*
+(- Latest validation sandbox result.) Tj
+T*
+() Tj
+T*
+(model_evolution_history.json) Tj
+T*
+(- Historical candidate evaluations and selected candidate snapshots.) Tj
+T*
+() Tj
+T*
+(backend/data/requests.db) Tj
+T*
+(- SQLite DB containing runtime tables for telemetry, drift, and audit.) Tj
+T*
+() Tj
+T*
+(frontend files) Tj
+T*
+() Tj
+T*
+(frontend/index.html) Tj
+T*
+(Purpose) Tj
+T*
+(- Dashboard shell: tabs for Overview, Chat, Telemetry, Analysis, Evolution, Registry, Drift,) Tj
+T*
+(Governance.) Tj
+T*
+(- Declares all DOM containers consumed by app.js.) Tj
+T*
+(Why used) Tj
+T*
+(- Plain HTML keeps hosting simple through FastAPI static mount.) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 2319 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+(frontend/app.js) Tj
+T*
+(Functions and flow) Tj
+T*
+(- Tab setup: click handlers toggle active tab content.) Tj
+T*
+(- showToast\(msg,type\): transient notifications.) Tj
+T*
+(- formatTime\(\), setWelcomeTime\(\): UI time formatting helpers.) Tj
+T*
+(- addMessage\(\), addTypingIndicator\(\), removeTypingIndicator\(\), scrollToBottom\(\), escapeHtml\(\),) Tj
+T*
+(toggleSendIcon\(\), clearChat\(\): chat UX utilities.) Tj
+T*
+(- sendMessage\(\): calls /infer, renders AI response, updates telemetry snippet.) Tj
+T*
+(- loadOverview\(\): pulls /health, /telemetry, /registry and updates top cards.) Tj
+T*
+(- loadTelemetry\(\): pulls /telemetry and builds latency chart.) Tj
+T*
+(- runAnalysis\(\): calls /analysis and displays results.) Tj
+T*
+(- triggerEvolution\(\): calls /evolve and renders result.) Tj
+T*
+(- loadEvolutionHistory\(\): calls /evolution-history.) Tj
+T*
+(- runProfiler\(\): calls /profiler/report and displays report.) Tj
+T*
+(- loadRegistry\(\): calls /registry and renders table.) Tj
+T*
+(- loadDrift\(\): calls /drift and renders score/history.) Tj
+T*
+(- loadGovernance\(\), performRollback\(\): governance controls.) Tj
+T*
+(- setText\(id,val\): tiny helper.) Tj
+T*
+(- DOMContentLoaded block: initial loading + polling every 10s.) Tj
+T*
+(Why used) Tj
+T*
+(- Single-file JS is easy to reason about for demo. Not using framework state-management to reduce) Tj
+T*
+(complexity.) Tj
+T*
+() Tj
+T*
+(frontend/styles.css) Tj
+T*
+(- Theming, layout, cards, table styles, chart visuals, toast, WhatsApp-like chat styling, responsive) Tj
+T*
+(rules.) Tj
+T*
+(Why used) Tj
+T*
+(- Pure CSS avoids build pipeline and dependencies.) Tj
+T*
+() Tj
+T*
+(backend package) Tj
+T*
+() Tj
+T*
+(backend/app/__init__.py) Tj
+T*
+(- Package marker; no logic.) Tj
+T*
+() Tj
+T*
+(backend/app/schemas.py) Tj
+T*
+(Classes) Tj
+T*
+(- InferenceRequest\(text\)) Tj
+T*
+(- InferenceResponse\(response, request_id, latency_ms, drift_detected, drift_score\)) Tj
+T*
+(- HealthResponse) Tj
+T*
+(- TelemetrySummary) Tj
+T*
+(- EvolutionRequest) Tj
+T*
+(- EvolutionResponse) Tj
+T*
+(- RollbackRequest) Tj
+T*
+(- RollbackResponse) Tj
+T*
+(- DriftStatus) Tj
+T*
+(Why used) Tj
+T*
+(- Pydantic validation and OpenAPI typing. Not using manual dict validation reduces errors.) Tj
+T*
+() Tj
+T*
+(backend/app/model.py) Tj
+T*
+(Global constants/state) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 2374 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+(- GGUF model source constants and paths.) Tj
+T*
+(- MAX_TOKENS, CONTEXT_SIZE.) Tj
+T*
+(- NUM_LAYERS/NUM_HEADS for telemetry simulation.) Tj
+T*
+(- head_activation_stats, ffn_sparsity_stats, token_frequency telemetry stores.) Tj
+T*
+(Functions) Tj
+T*
+(- download_model\(\): ensures GGUF exists in models/base; downloads from HF if absent.) Tj
+T*
+(- format_chat_prompt\(user_message,system_prompt=None\): TinyLlama chat template builder.) Tj
+T*
+(- _simulate_telemetry\(prompt_text,output_text\): deterministic pseudo internal metrics for GGUF) Tj
+T*
+(compatibility.) Tj
+T*
+(Class ModelManager) Tj
+T*
+(- __init__\(\): initializes and loads base model.) Tj
+T*
+(- load_base_model\(\): creates llama_cpp.Llama on base GGUF.) Tj
+T*
+(- load_latest_optimized\(\): chooses latest models/optimized/v* GGUF and loads it.) Tj
+T*
+(- generate\(prompt\): inference call, token stats extraction, telemetry simulation, returns tuple.) Tj
+T*
+(Module APIs) Tj
+T*
+(- model_manager singleton.) Tj
+T*
+(- generate_text\(prompt\): wrapper.) Tj
+T*
+(Why used) Tj
+T*
+(- llama-cpp-python works with GGUF directly. Not using transformers runtime avoids huge RAM/VRAM for) Tj
+T*
+(this model format.) Tj
+T*
+(- Telemetry simulation is used because llama_cpp does not expose full internal per-head activations.) Tj
+T*
+() Tj
+T*
+(backend/app/database.py) Tj
+T*
+(DB setup) Tj
+T*
+(- db_path and init_db\(\) create tables.) Tj
+T*
+(- get_db\(\): per-operation connection with row_factory.) Tj
+T*
+(Tables) Tj
+T*
+(- telemetry_requests) Tj
+T*
+(- telemetry_structural) Tj
+T*
+(- evolution_audit_log) Tj
+T*
+(- drift_history) Tj
+T*
+(Logging functions) Tj
+T*
+(- log_request_telemetry\(...\)) Tj
+T*
+(- log_layer_telemetry\(...\): placeholder pass.) Tj
+T*
+(- log_attention_telemetry\(...\): stores JSON bundle of head/layer metrics.) Tj
+T*
+(- log_drift_event\(...\)) Tj
+T*
+(- log_evolution_audit\(...\)) Tj
+T*
+(Query functions) Tj
+T*
+(- get_recent_telemetry\(limit\)) Tj
+T*
+(- get_structural_telemetry\(limit\)) Tj
+T*
+(- get_drift_history\(limit\)) Tj
+T*
+(- get_evolution_audit_log\(limit\)) Tj
+T*
+(- get_telemetry_summary\(\)) Tj
+T*
+(- get_aggregated_head_stats\(\)) Tj
+T*
+(- get_aggregated_ffn_stats\(\)) Tj
+T*
+(Utility) Tj
+T*
+(- _safe_json\(data\)) Tj
+T*
+(Why used) Tj
+T*
+(- SQLite JSON fields are sufficient for telemetry snapshots. Not using ORM reduces abstraction) Tj
+T*
+(overhead.) Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 2179 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+() Tj
+T*
+(backend/app/drift_detector.py) Tj
+T*
+(State) Tj
+T*
+(- text_memory, vocab_memory, MAX_MEMORY.) Tj
+T*
+(- TF-IDF vectorizer.) Tj
+T*
+(Functions) Tj
+T*
+(- initialize_memory\(texts\): warm-start detector.) Tj
+T*
+(- get_embedding\(text\): returns TF-IDF vector.) Tj
+T*
+(- compute_vocab_shift\(text\)) Tj
+T*
+(- compute_intent_variance\(\)) Tj
+T*
+(- detect_drift\(text,threshold=0.35\): main score calculation and flag.) Tj
+T*
+(- get_drift_status\(\)) Tj
+T*
+(Why used) Tj
+T*
+(- TF-IDF + cosine is lightweight and no extra model load. Not using embedding models keeps latency) Tj
+T*
+(and memory low.) Tj
+T*
+() Tj
+T*
+(backend/app/structural_analyzer.py) Tj
+T*
+(Constants) Tj
+T*
+(- PRUNE_THRESHOLD, MAX_PRUNE_RATIO, HIGH_SPARSITY_THRESHOLD, PROTECTED_BLOCKS.) Tj
+T*
+(Functions) Tj
+T*
+(- identify_prunable_blocks\(block_importance\)) Tj
+T*
+(- compute_risk_score\(selected_blocks,block_importance\)) Tj
+T*
+(- detect_redundant_ffn_layers\(ffn_sparsity\)) Tj
+T*
+(- score_neuron_importance\(head_stats\)) Tj
+T*
+(- recommend_rewiring\(head_scores,ffn_redundancy\)) Tj
+T*
+(- run_full_analysis\(head_stats,ffn_sparsity\)) Tj
+T*
+(Why used) Tj
+T*
+(- Rule-based analysis gives transparent decisions. Not using black-box RL/AutoML keeps auditability.) Tj
+T*
+() Tj
+T*
+(backend/app/usage_profiler.py) Tj
+T*
+(Constants) Tj
+T*
+(- OUTPUT_PATH, DORMANT_THRESHOLD.) Tj
+T*
+(Functions) Tj
+T*
+(- compute_importance\(usage_dict\)) Tj
+T*
+(- find_dormant\(importance_dict\)) Tj
+T*
+(- aggregate_to_block_level\(importance_dict\)) Tj
+T*
+(- analyze_token_frequencies\(token_freq,top_n=20\)) Tj
+T*
+(- generate_usage_and_structure_report\(\): main report generation pipeline.) Tj
+T*
+(Why used) Tj
+T*
+(- Aggregation from DB gives deterministic report reproducibility. Not streaming analytics stack) Tj
+T*
+(because scale is local.) Tj
+T*
+() Tj
+T*
+(backend/app/governance.py) Tj
+T*
+(Functions) Tj
+T*
+(- perform_rollback\(target_version=None,reason='Manual rollback'\)) Tj
+T*
+(- get_audit_log\(limit=50\)) Tj
+T*
+(- approve_evolution\(version,approver='admin'\)) Tj
+T*
+(- reject_evolution\(version,reason,rejector='admin'\)) Tj
+T*
+(- get_governance_summary\(\)) Tj
+T*
+(Why used) Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 2298 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+(- Dedicated governance layer separates policy/audit from orchestration logic.) Tj
+T*
+() Tj
+T*
+(backend/app/seed_data.py) Tj
+T*
+(Functions) Tj
+T*
+(- seed_telemetry\(\)) Tj
+T*
+(- seed_drift\(\)) Tj
+T*
+(- seed_evolution\(\)) Tj
+T*
+(- seed_structural\(\)) Tj
+T*
+(Why used) Tj
+T*
+(- Demo/testing bootstrap without real traffic.) Tj
+T*
+() Tj
+T*
+(backend/app/main.py \(central API orchestrator\)) Tj
+T*
+(Startup and observability) Tj
+T*
+(- Prometheus counters/histograms/gauges.) Tj
+T*
+(- OpenTelemetry tracer provider and FastAPI instrumentation.) Tj
+T*
+(- startup_event\(\): drift warm-up.) Tj
+T*
+(Evolution safety controls) Tj
+T*
+(- DRIFT_THRESHOLD, EVOLUTION_COOLDOWN, LAST_EVOLUTION_TIME, EVOLUTION_LOCK.) Tj
+T*
+(- trigger_evolution\(\): guarded evolution launcher + post-approval model switch.) Tj
+T*
+(Endpoints/functions) Tj
+T*
+(- serve_dashboard\(\) -> GET /) Tj
+T*
+(- health\(\) -> GET /health) Tj
+T*
+(- infer\(request\) -> POST /infer) Tj
+T*
+(- get_telemetry\(limit=50\) -> GET /telemetry) Tj
+T*
+(- get_structural\(limit=20\) -> GET /telemetry/structural) Tj
+T*
+(- run_profiler\(\) -> POST /profiler/run) Tj
+T*
+(- get_profiler_report\(\) -> GET /profiler/report) Tj
+T*
+(- get_analysis\(\) -> GET /analysis) Tj
+T*
+(- trigger_evolution_manual\(request=None\) -> POST /evolve) Tj
+T*
+(- get_evolution_history\(limit=50\) -> GET /evolution-history) Tj
+T*
+(- view_registry\(\) -> GET /registry) Tj
+T*
+(- view_model_version\(version\) -> GET /registry/{version}) Tj
+T*
+(- view_drift\(limit=50\) -> GET /drift) Tj
+T*
+(- governance_alias\(\) -> GET /governance) Tj
+T*
+(- rollback_alias\(\) -> POST /rollback) Tj
+T*
+(- view_audit_log\(limit=50\) -> GET /governance/audit) Tj
+T*
+(- rollback\(request\) -> POST /governance/rollback) Tj
+T*
+(- approve\(version\) -> POST /governance/approve/{version}) Tj
+T*
+(- reject\(version,reason='Not specified'\) -> POST /governance/reject/{version}) Tj
+T*
+(- metrics\(\) -> GET /metrics) Tj
+T*
+(Why used) Tj
+T*
+(- Single integration point makes request lifecycle clear. Not split into many routers yet because) Tj
+T*
+(project size is moderate.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution package) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/__init__.py) Tj
+T*
+(- Package marker.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/candidate_generator.py) Tj
+T*
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 14 0 R >>
+endobj
+16 0 obj
+<< /Length 2374 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+(- generate_candidates\(prunable_blocks\): creates combinations of prune sets.) Tj
+T*
+(Why used) Tj
+T*
+(- Combination generation is simple exhaustive search for small candidate count.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/evaluator.py) Tj
+T*
+(- evaluate_candidate\(candidate, block_importance\): heuristic scoring with latency/memory/risk.) Tj
+T*
+(Why used) Tj
+T*
+(- Heuristic cost function avoids expensive training-time evaluation.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/evolution_logger.py) Tj
+T*
+(- log_evolution\(results, selected, path='model_evolution_history.json'\): writes JSON history and DB) Tj
+T*
+(audit entry.) Tj
+T*
+(Why used) Tj
+T*
+(- Dual logging gives both file-based trace and queryable audit DB.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/recompiler.py) Tj
+T*
+(- get_next_version\(\): computes next vN directory.) Tj
+T*
+(- recompile_model\(optimization='all', heads_to_prune=None, layers_to_remove=None\): simulated GGUF) Tj
+T*
+(recompilation; copies GGUF and writes architecture_diff.json.) Tj
+T*
+(Why used) Tj
+T*
+(- GGUF cannot be surgically retrained here, so metadata-driven recompilation is pragmatic.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/validation_sandbox.py) Tj
+T*
+(- get_latest_model_path\(\)) Tj
+T*
+(- similarity\(a,b\)) Tj
+T*
+(- _generate\(model,prompt\)) Tj
+T*
+(- run_validation\(\): loads base+optimized model, checks similarity/factual signals/latency, enforces) Tj
+T*
+(PASS criteria, writes validation_report.json.) Tj
+T*
+(Why used) Tj
+T*
+(- Lightweight safety gate before deployment. Not full benchmark suite to keep cycle fast.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/rollback.py) Tj
+T*
+(- get_latest_version_path\(\)) Tj
+T*
+(- backup_model\(\)) Tj
+T*
+(- rollback_model\(\)) Tj
+T*
+(- rollback_to_version\(target_version\)) Tj
+T*
+(Why used) Tj
+T*
+(- File-copy rollback is immediate and robust for local artifacts.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/model_registry.py) Tj
+T*
+(- get_latest_version\(\)) Tj
+T*
+(- get_previous_version\(current_version\)) Tj
+T*
+(- register_model\(version, architecture_diff, validation_report\)) Tj
+T*
+(- get_registry\(\)) Tj
+T*
+(- get_model_entry\(version\)) Tj
+T*
+(- build_lineage\(version\)) Tj
+T*
+(- get_registry_summary\(\)) Tj
+T*
+(Why used) Tj
+T*
+(- Explicit lineage and metrics record. Not relying only on folder names for governance/audit) Tj
+T*
+(completeness.) Tj
+T*
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 16 0 R >>
+endobj
+18 0 obj
+<< /Length 1926 >>
+stream
+BT
+/F1 10 Tf
+50 800 Td
+14 TL
+() Tj
+T*
+(backend/app/evolution/distillation.py) Tj
+T*
+(- distill\(...\): no-op for GGUF with log message.) Tj
+T*
+(Why used) Tj
+T*
+(- Placeholder API preserves architecture requirement while acknowledging GGUF constraints.) Tj
+T*
+() Tj
+T*
+(backend/app/evolution/compare_models.py) Tj
+T*
+(- get_latest_optimized_path\(\)) Tj
+T*
+(- compare_models\(\): optional utility using transformers AutoModelForSeq2SeqLM.) Tj
+T*
+(Why used) Tj
+T*
+(- Standalone comparison helper; not integrated into live API path.) Tj
+T*
+() Tj
+T*
+(4\) Why these specific choices instead of alternatives) Tj
+T*
+(- llama_cpp over transformers: direct GGUF support and lower resource overhead.) Tj
+T*
+(- SQLite over PostgreSQL: simpler local operations, zero external service dependency.) Tj
+T*
+(- Rule-based analyzer over learned policy: transparent and debuggable pruning decisions.) Tj
+T*
+(- Background thread trigger over task queue: low setup complexity; acceptable for local single-node) Tj
+T*
+(use.) Tj
+T*
+(- Static frontend over SPA framework: immediate deploy with FastAPI static mount and no build) Tj
+T*
+(tooling.) Tj
+T*
+() Tj
+T*
+(5\) Known gaps and tradeoffs) Tj
+T*
+(- Structural telemetry is simulated, not real hidden-state instrumentation.) Tj
+T*
+(- Evolution recompilation is metadata simulation for GGUF copies, not true weight surgery.) Tj
+T*
+(- Some frontend-backend field expectations are loosely aligned and may drift.) Tj
+T*
+(- compare_models.py uses a different model family than TinyLlama flow.) Tj
+T*
+() Tj
+T*
+(6\) Suggested future upgrades) Tj
+T*
+(- Split main.py into router modules.) Tj
+T*
+(- Add typed service layer between API and DB.) Tj
+T*
+(- Replace simulated telemetry with instrumented model internals \(if model/runtime supports it\).) Tj
+T*
+(- Add async job queue for evolution tasks.) Tj
+T*
+(- Add integration tests for endpoints and evolution gates.) Tj
+T*
+() Tj
+T*
+(End of report.) Tj
+T*
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 18 0 R >>
+endobj
+xref
+0 20
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000162 00000 n 
+0000000232 00000 n 
+0000003091 00000 n 
+0000003217 00000 n 
+0000005173 00000 n 
+0000005299 00000 n 
+0000007670 00000 n 
+0000007796 00000 n 
+0000010223 00000 n 
+0000010351 00000 n 
+0000012583 00000 n 
+0000012711 00000 n 
+0000015062 00000 n 
+0000015190 00000 n 
+0000017617 00000 n 
+0000017745 00000 n 
+0000019724 00000 n 
+trailer
+<< /Size 20 /Root 1 0 R >>
+startxref
+19852
+%%EOF
