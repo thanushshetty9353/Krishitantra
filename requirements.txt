@@ -10,3 +10,6 @@ opentelemetry-instrumentation-fastapi
 PyPDF2
 llama-cpp-python
 huggingface_hub
+
+
+# uvicorn backend.app.main:app 
